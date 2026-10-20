@@ -6,12 +6,12 @@ const DIFFERENCES = [
   {
     icon: Layers,
     title: 'All three jobs, one tool',
-    body: 'Most businesses stitch together a texting tool, an answering service and a review platform. Here it’s one number, one inbox and one bill.',
+    body: 'Instead of paying for a texting tool, an answering service and a review platform, you get one number, one inbox and one bill.',
   },
   {
     icon: PhoneIncoming,
     title: 'Your phone rings first',
-    body: 'AI-only answering services pick up every call. We ring you first and only step in when you can’t answer, so regulars still reach you.',
+    body: 'AI-only answering services pick up every call. We ring you first and only step in when you can’t answer, so your regulars still get you.',
   },
   {
     icon: Workflow,
@@ -26,7 +26,7 @@ const DIFFERENCES = [
   {
     icon: UserCheck,
     title: 'You approve the hard replies',
-    body: 'Thank-yous to happy reviews can post on their own. Anything critical waits for you, so the AI never argues with a customer in public.',
+    body: 'Thank-yous for happy customers can post on their own. Anything critical waits for you, so the AI never argues with a customer in public.',
   },
   {
     icon: ShieldCheck,

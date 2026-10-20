@@ -28,7 +28,7 @@ export function AuthForm({
       <CardHeader>
         <CardTitle>{isLogin ? 'Sign in' : 'Create your account'}</CardTitle>
         <CardDescription>
-          {isLogin ? 'Welcome back to BizComms.' : 'Never lose a customer to a missed call again.'}
+          {isLogin ? 'Welcome back to BizComms.' : 'Never lose a job to a missed call again.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
