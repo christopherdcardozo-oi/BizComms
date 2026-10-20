@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/auto-refresh';
@@ -29,8 +30,9 @@ export default async function ThreadPage({ params }: { params: Promise<{ contact
       <AutoRefresh seconds={10} />
       <CardHeader className="flex-row items-center justify-between gap-4 space-y-0">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/inbox" className="text-sm text-muted-foreground hover:text-foreground">
-            ← Inbox
+          <Link href="/dashboard/inbox" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft aria-hidden className="h-4 w-4" />
+            Inbox
           </Link>
           <CardTitle className="tabular-nums">{formatNanp(contact)}</CardTitle>
         </div>

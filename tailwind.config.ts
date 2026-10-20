@@ -2,7 +2,9 @@ import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
 
 const config: Config = {
-  darkMode: ['class'],
+  // The theme follows the OS (prefers-color-scheme), so dark: variants must too. With 'class',
+  // every dark: color in the app was silently ignored (caught by the impeccable contrast scan).
+  darkMode: 'media',
   // Gate every hover: style behind (hover: hover) so taps on touch devices don't leave sticky hovers.
   future: { hoverOnlyWhenSupported: true },
   content: ['./src/**/*.{ts,tsx}'],
@@ -24,6 +26,7 @@ const config: Config = {
       },
       borderRadius: { lg: 'var(--radius)', md: 'calc(var(--radius) - 2px)', sm: 'calc(var(--radius) - 4px)' },
       fontFamily: {
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
         sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
       },
       // Strong custom curves (built-in CSS easings are too weak): ease-out for enter/feedback,

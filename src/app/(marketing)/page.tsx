@@ -1,9 +1,11 @@
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import { ReceptionistDemo, ReviewDemo, TextBackDemo } from '@/components/marketing/demo-cards';
+import { InboxDemo, ReceptionistDemo, ReviewDemo, TextBackDemo } from '@/components/marketing/demo-cards';
 import { Pricing } from '@/components/marketing/pricing';
+import { WhyUs } from '@/components/marketing/why-us';
 import { Button } from '@/components/ui/button';
-import { siteConfig } from '@/lib/site';
+import { pricing, siteConfig } from '@/lib/site';
 
 export const metadata = {
   title: `${siteConfig.name} · Never lose a customer to a missed call`,
@@ -15,8 +17,8 @@ const i = (n: number) => ({ '--i': n }) as CSSProperties;
 const PRODUCTS = [
   {
     name: 'Missed-call text-back',
-    body: "Calls ring your phone first. If you can't pick up, the caller gets a text from your business number right away, and the conversation lands in your inbox.",
-    demo: null,
+    body: "Calls ring your phone first. If you can't pick up, the caller gets a text from your business number within seconds, and the whole conversation lands in one shared inbox your team can answer from.",
+    demo: <InboxDemo />,
   },
   {
     name: 'AI receptionist',
@@ -65,17 +67,14 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 md:grid-cols-[1.1fr_1fr] md:pt-24">
         <div className="stagger flex flex-col gap-6">
-          <p style={i(0)} className="text-sm font-medium text-primary">
-            For plumbers, HVAC, clinics, salons and every business that runs on the phone
-          </p>
-          <h1 style={i(1)} className="text-display">
+          <h1 style={i(0)} className="text-display">
             Never lose a customer to a missed call.
           </h1>
-          <p style={i(2)} className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-            {siteConfig.name} texts back every caller you miss, answers with an AI receptionist when you can&apos;t, and replies to your
-            Google reviews, so jobs stop slipping through the cracks.
+          <p style={i(1)} className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+            For plumbers, HVAC techs, clinics, salons and anyone who runs on the phone: {siteConfig.name} texts back every caller you miss,
+            answers with an AI receptionist when you can&apos;t, and replies to your Google reviews.
           </p>
-          <div style={i(3)} className="flex flex-wrap gap-3">
+          <div style={i(2)} className="flex flex-wrap gap-3">
             <Button asChild size="lg">
               <Link href="/signup">Get started</Link>
             </Button>
@@ -83,32 +82,36 @@ export default function LandingPage() {
               <a href="#how">See how it works</a>
             </Button>
           </div>
-          <p style={i(4)} className="text-sm text-muted-foreground">
-            Set up in minutes. No hardware, no new phone.
+          <p style={i(3)} className="text-sm text-muted-foreground">
+            From {pricing.currency}
+            {Math.min(...pricing.plans.map((p) => p.monthly))}/month. No contracts. Set up in minutes.
           </p>
         </div>
         <TextBackDemo />
       </section>
 
       {/* Products */}
-      <section id="products" className="scroll-mt-20 border-t bg-muted/40">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <div className="mb-12 max-w-2xl">
+      <section id="products" className="scroll-mt-20 border-t">
+        <div className="mx-auto max-w-6xl px-4 py-24">
+          <div className="mb-16 max-w-2xl">
             <h2 className="text-title">Three ways to stop losing work</h2>
-            <p className="mt-3 text-muted-foreground">Use one or all three. They share one dashboard, one inbox and one call log.</p>
+            <p className="mt-4 text-lg text-muted-foreground">Use one or all three. They share one dashboard, one inbox and one call log.</p>
           </div>
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="flex flex-col gap-20 md:gap-24">
             {PRODUCTS.map((p, n) => (
-              <article key={p.name} className="flex flex-col gap-4 rounded-2xl border bg-card p-6">
-                <span className="text-xs font-medium text-muted-foreground">0{n + 1}</span>
-                <h3 className="text-lg font-semibold tracking-tight">{p.name}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{p.body}</p>
-                {p.demo ? <div className="mt-auto pt-2">{p.demo}</div> : null}
+              <article key={p.name} className="grid items-center gap-8 md:grid-cols-2 md:gap-16">
+                <div className={n % 2 ? 'md:order-2' : undefined}>
+                  <h3 className="font-display text-2xl font-bold tracking-tight md:text-3xl">{p.name}</h3>
+                  <p className="mt-4 max-w-md text-[17px] leading-relaxed text-muted-foreground">{p.body}</p>
+                </div>
+                <div className={n % 2 ? 'flex md:order-1 md:justify-start' : 'flex md:justify-end'}>{p.demo}</div>
               </article>
             ))}
           </div>
         </div>
       </section>
+
+      <WhyUs />
 
       {/* How it works */}
       <section id="how" className="scroll-mt-20">
@@ -118,27 +121,11 @@ export default function LandingPage() {
             {STEPS.map((s, n) => (
               <li key={s.title} className="flex flex-col gap-3">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border text-sm font-medium tabular-nums">{n + 1}</span>
-                <h3 className="font-semibold tracking-tight">{s.title}</h3>
+                <h3 className="font-display text-lg font-semibold tracking-tight">{s.title}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{s.body}</p>
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      {/* Trust */}
-      <section className="border-y bg-muted/40">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-14 text-sm sm:grid-cols-3">
-          {[
-            ['Calls never get dropped', 'If anything on our side fails, your phone still rings. Missed callers still get a text.'],
-            ['Compliance built in', 'Opt-outs, carrier registration, and AI and recording disclosure are handled for you.'],
-            ['Your data stays yours', 'Each business’s data is isolated, and connected Google accounts are encrypted.'],
-          ].map(([title, body]) => (
-            <div key={title} className="flex flex-col gap-2">
-              <h3 className="font-semibold tracking-tight">{title}</h3>
-              <p className="leading-relaxed text-muted-foreground">{body}</p>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -153,9 +140,7 @@ export default function LandingPage() {
               <details key={f.q} className="group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
                   {f.q}
-                  <span aria-hidden className="text-muted-foreground transition-transform duration-200 ease-out group-open:rotate-45">
-                    +
-                  </span>
+                  <Plus aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-open:rotate-45" />
                 </summary>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
               </details>

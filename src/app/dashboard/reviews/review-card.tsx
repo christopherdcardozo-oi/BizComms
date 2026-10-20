@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/input';
+import { Stars } from '@/components/ui/stars';
 import type { ReviewRow } from '@/lib/dashboard/queries';
 import { approveAndPublish, saveReviewDraft } from './actions';
 
@@ -17,15 +18,6 @@ const STATUS: Record<ReviewRow['reply_status'], { label: string; tone: 'success'
   generating: { label: 'Drafting…', tone: 'secondary' },
   skipped: { label: 'Skipped', tone: 'secondary' },
 };
-
-function Stars({ count }: { count: number }) {
-  return (
-    <span aria-label={`${count} out of 5 stars`} className="text-amber-500">
-      {'★'.repeat(count)}
-      <span className="text-muted-foreground/40">{'★'.repeat(5 - count)}</span>
-    </span>
-  );
-}
 
 export function ReviewCard({ review, date, canPublish }: { review: ReviewRow; date: string; canPublish: boolean }) {
   const [draftState, draftAction, saving] = useActionState(saveReviewDraft, {});
@@ -48,7 +40,7 @@ export function ReviewCard({ review, date, canPublish }: { review: ReviewRow; da
         {review.comment ? <p className="text-sm">{review.comment}</p> : <p className="text-sm italic text-muted-foreground">Rating only, no text.</p>}
 
         {published ? (
-          <div className="rounded-md border-l-2 border-primary bg-muted px-3 py-2 text-sm">
+          <div className="rounded-lg bg-muted px-3 py-2 text-sm ring-1 ring-inset ring-border/60">
             <span className="text-xs font-medium text-muted-foreground">Your reply</span>
             <p>{review.reply_text}</p>
           </div>

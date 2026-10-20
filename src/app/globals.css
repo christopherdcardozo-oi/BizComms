@@ -62,23 +62,47 @@
   h3 {
     text-wrap: balance;
   }
-  p {
+  p,
+  li,
+  dd {
     text-wrap: pretty;
+  }
+
+  /* Browser surfaces carry the palette too: selection, caret, native controls, scrollbars,
+     focus rings and link underlines all default to colors that belong to no design system. */
+  ::selection {
+    background: hsl(var(--primary) / 0.22);
+    color: hsl(var(--foreground));
+  }
+  html {
+    caret-color: hsl(var(--primary));
+    accent-color: hsl(var(--primary));
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
   }
 }
 
 @layer utilities {
   .text-display {
-    font-size: clamp(2.25rem, 5.5vw, 4rem);
-    line-height: 1.04;
+    font-family: var(--font-display), system-ui, sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1;
     letter-spacing: -0.035em;
-    font-weight: 650;
+    font-weight: 700;
   }
   .text-title {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    line-height: 1.1;
+    font-family: var(--font-display), system-ui, sans-serif;
+    font-size: clamp(1.875rem, 3.6vw, 2.75rem);
+    line-height: 1.05;
     letter-spacing: -0.025em;
-    font-weight: 650;
+    font-weight: 700;
   }
   .press:active {
     transform: scale(0.97);

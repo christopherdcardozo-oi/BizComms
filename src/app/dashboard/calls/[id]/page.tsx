@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +26,9 @@ export default async function CallDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Calls
+      <Link href="/dashboard" className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft aria-hidden className="h-4 w-4" />
+        Calls
       </Link>
       <Card>
         <CardHeader>

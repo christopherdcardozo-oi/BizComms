@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { Stars } from '@/components/ui/stars';
 import { cn } from '@/lib/ui/cn';
 
 // Explanatory marketing motion (plays once on load): messages arrive in sequence to show how a
@@ -20,16 +21,31 @@ function Bubble({ from, children, at }: { from: 'business' | 'customer'; childre
   );
 }
 
+function Pill({ tone, children }: { tone: 'amber' | 'emerald' | 'primary'; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn(
+        'rounded-full px-2 py-0.5 text-xs font-medium',
+        tone === 'amber' && 'bg-amber-500/15 text-amber-800 dark:text-amber-300',
+        tone === 'emerald' && 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
+        tone === 'primary' && 'bg-primary/15 text-blue-800 dark:text-blue-200'
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function TextBackDemo() {
   return (
-    <div className="mx-auto w-full max-w-[22rem] rounded-[2rem] border bg-card p-3 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)]">
+    <div className="mx-auto w-full max-w-[22rem] rounded-[2rem] border bg-card p-3 shadow-[0_28px_60px_-28px_rgba(15,23,42,0.45)]">
       <div className="rounded-[1.5rem] bg-background p-4">
-        <div className="mb-4 flex items-center justify-between border-b pb-3">
+        <div className="mb-4 flex items-center justify-between gap-3 border-b pb-3">
           <div>
-            <p className="text-sm font-medium">(515) 555-0142</p>
+            <p className="text-sm font-medium tabular-nums">(515) 555-0142</p>
             <p className="text-xs text-muted-foreground">Customer</p>
           </div>
-          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400">Missed call · 2:14 PM</span>
+          <Pill tone="amber">Missed call · 2:14 PM</Pill>
         </div>
         <div className="flex flex-col gap-2" aria-label="Example text conversation">
           <Bubble from="business" at={400}>
@@ -47,14 +63,43 @@ export function TextBackDemo() {
   );
 }
 
+const panel = 'flex w-full max-w-md flex-col gap-3 rounded-2xl bg-muted/60 p-5 text-sm ring-1 ring-inset ring-border/60';
+
+export function InboxDemo() {
+  const rows = [
+    { who: '(515) 555-0142', last: 'My water heater is leaking. Can someone…', when: '2:14 PM', needs: true },
+    { who: '(515) 555-0177', last: 'You: We can be there Thursday at 9.', when: '11:02 AM', needs: false },
+    { who: '(515) 555-0103', last: 'Thanks for getting back to me so fast!', when: 'Yesterday', needs: false },
+  ];
+  return (
+    <div className={panel}>
+      <p className="font-medium">Inbox</p>
+      <ul className="flex flex-col divide-y divide-border/70">
+        {rows.map((r) => (
+          <li key={r.who} className="flex items-start justify-between gap-3 py-2.5">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 font-medium tabular-nums">
+                {r.who}
+                {r.needs ? <Pill tone="primary">Needs reply</Pill> : null}
+              </p>
+              <p className="truncate text-[13px] text-muted-foreground">{r.last}</p>
+            </div>
+            <span className="shrink-0 text-xs text-muted-foreground">{r.when}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function ReceptionistDemo() {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border bg-background p-4 text-sm">
+    <div className={panel}>
       <div className="flex items-center justify-between">
         <span className="font-medium">After-hours call</span>
-        <span className="text-xs text-muted-foreground">1m 42s</span>
+        <span className="text-xs tabular-nums text-muted-foreground">1m 42s</span>
       </div>
-      <p className="rounded-md bg-muted px-3 py-2 text-[13px] leading-snug">
+      <p className="rounded-lg bg-background px-3 py-2 text-[13px] leading-snug">
         <span className="font-medium">Summary: </span>
         Dana needs a furnace inspection before Friday. Prefers mornings. Callback (515) 555-0188.
       </p>
@@ -65,18 +110,18 @@ export function ReceptionistDemo() {
 
 export function ReviewDemo() {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border bg-background p-4 text-sm">
+    <div className={panel}>
       <div className="flex items-center justify-between">
         <span className="font-medium">Jordan P.</span>
-        <span aria-label="5 out of 5 stars" className="text-amber-500">
-          ★★★★★
-        </span>
+        <Stars count={5} />
       </div>
       <p className="text-[13px] leading-snug text-muted-foreground">Showed up on time and fixed it fast. Fair price too.</p>
-      <p className="border-l-2 border-primary pl-3 text-[13px] leading-snug">
+      <p className="rounded-lg bg-background px-3 py-2 text-[13px] leading-snug">
         Thank you, Jordan! We&apos;re glad we could get it fixed quickly. We appreciate you choosing us.
       </p>
-      <span className="self-start rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Posted automatically</span>
+      <span className="self-start">
+        <Pill tone="emerald">Posted automatically</Pill>
+      </span>
     </div>
   );
 }

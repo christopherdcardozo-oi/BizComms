@@ -23,30 +23,46 @@ export interface PricingPlan {
 
 export const pricing = {
   currency: '$',
-  setupFee: 49, // one-time; covers carrier (A2P 10DLC) registration
+  setupFee: 29, // one-time; covers carrier (A2P 10DLC) registration; waived on annual plans
   annualMonthsFree: 2,
+  // Unit-cost check (estimates): number ~$1-2/mo, texts ~1c, ringing the owner ~2c/min,
+  // AI receptionist ~$0.10-0.20/min (confirm on the first Vapi invoice), AI review replies <1c.
   plans: [
     {
       id: 'text-back',
       name: 'Text-Back',
-      monthly: 49,
+      monthly: 29,
       blurb: 'Never lose a missed caller again.',
       features: ['Local business number', 'Instant text-back to missed callers', 'Shared text inbox', 'Call log', 'Opt-out handling built in'],
     },
     {
       id: 'receptionist',
       name: 'Receptionist',
-      monthly: 149,
+      monthly: 89,
       blurb: 'An AI that answers when you can’t.',
-      features: ['Everything in Text-Back', 'AI receptionist, 300 minutes/month', 'Call summaries, transcripts and recordings', 'After-hours call handling', 'Custom receptionist instructions'],
+      features: [
+        'Everything in Text-Back',
+        'AI receptionist, 200 minutes/month',
+        'Call summaries, transcripts and recordings',
+        'After-hours call handling',
+        'Text-back if a caller hangs up on the AI',
+      ],
       highlighted: true,
     },
     {
       id: 'complete',
       name: 'Complete',
-      monthly: 199,
+      monthly: 129,
       blurb: 'Calls, texts and your Google reputation.',
       features: ['Everything in Receptionist', 'AI replies to every Google review', 'Auto-post replies to happy reviews', 'Approve critical replies first'],
     },
   ] satisfies PricingPlan[],
 };
+
+// What a business typically pays for the same jobs as separate tools (2026 public price ranges
+// from comparison guides; deliberately generic categories, not named competitors).
+export const separateToolsComparison = [
+  { label: 'Missed-call text-back tool', range: '$29–149/mo', low: 29 },
+  { label: 'AI receptionist service', range: '$99–299/mo', low: 99 },
+  { label: 'Review management platform', range: '$299–449/mo', low: 299 },
+];

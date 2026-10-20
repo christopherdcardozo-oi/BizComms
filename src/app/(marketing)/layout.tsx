@@ -20,6 +20,9 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <a href="#products" className="hover:text-foreground">
               Products
             </a>
+            <a href="#why" className="hover:text-foreground">
+              Why us
+            </a>
             <a href="#how" className="hover:text-foreground">
               How it works
             </a>

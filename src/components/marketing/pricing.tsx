@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { pricing } from '@/lib/site';
 import { cn } from '@/lib/ui/cn';
+import { SeparateToolsComparison } from './why-us';
 
 export function Pricing() {
   return (
@@ -13,6 +14,7 @@ export function Pricing() {
             One local business at a time, no contracts. Get {pricing.annualMonthsFree} months free when you pay yearly.
           </p>
         </div>
+        <SeparateToolsComparison />
         <div className="grid gap-6 md:grid-cols-3">
           {pricing.plans.map((plan) => (
             <article
@@ -50,8 +52,8 @@ export function Pricing() {
           ))}
         </div>
         <p className="mt-8 text-sm text-muted-foreground">
-          Prices in USD. Plus a one-time {pricing.currency}
-          {pricing.setupFee} setup fee that covers carrier registration for your texting. Cancel anytime.
+          Prices in USD. One-time {pricing.currency}
+          {pricing.setupFee} setup covers carrier registration for your texting, waived on yearly plans. No contracts, cancel anytime.
         </p>
       </div>
     </section>

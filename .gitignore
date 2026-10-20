@@ -20,3 +20,7 @@ data/
 
 # local Vapi test receptionist ids (scripts/vapi-test-receptionist.ts)
 .vapi-test.json
+
+# Impeccable engine binary (re-downloaded by `npx impeccable install`); keep 17MB natives out of git
+.claude/skills/impeccable/scripts/bin/
+.impeccable/
