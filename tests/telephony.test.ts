@@ -73,7 +73,7 @@ test('incoming: after hours goes straight to the AI with correlation SIP headers
   const { deps, repo } = makeDeps({ now: () => TUESDAY_8PM_CHICAGO });
   const res = await handleIncomingCall(CALL, deps);
   assert.match(res.twiml!, /action="https:\/\/app\.test\/api\/incoming-call\/action\?leg=ai"/);
-  assert.match(res.twiml!, /<Sip>sip:bizcomms-org-acme@sip\.vapi\.ai\?X-bizcomms_org_id=org-acme&amp;X-bizcomms_call_sid=CA100<\/Sip>/);
+  assert.match(res.twiml!, /<Sip>sip:bc-orgacme@sip\.vapi\.ai\?X-bizcomms_org_id=org-acme&amp;X-bizcomms_call_sid=CA100<\/Sip>/);
   await runAll(res);
   assert.equal(repo.callLogs.get('CA100')?.outcome, 'forwarded_to_ai');
 });
@@ -125,7 +125,7 @@ test('action: owner answered -> hang up and record answered_by_business', async 
 test('action: owner no-answer hands off to AI', async () => {
   const { deps, sms } = makeDeps();
   const res = await handleDialAction({ ...CALL, DialCallStatus: 'no-answer' }, 'forward', deps);
-  assert.match(res.twiml!, /<Sip>sip:bizcomms-org-acme@sip\.vapi\.ai/);
+  assert.match(res.twiml!, /<Sip>sip:bc-orgacme@sip\.vapi\.ai/);
   await runAll(res);
   assert.equal(sms.sentMessages.length, 0);
 });

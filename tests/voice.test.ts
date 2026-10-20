@@ -8,6 +8,7 @@ import { handleDialAction, handleIncomingCall } from '../src/lib/telephony/handl
 import { isAuthorizedVapiRequest } from '../src/lib/voice/auth';
 import { provisionReceptionist, type ReceptionistStore } from '../src/lib/voice/receptionist';
 import { parseVapiServerMessage } from '../src/lib/voice/report';
+import { vapiSipUri } from '../src/lib/voice/sip';
 import { classifyAiCall, handleVapiWebhook } from '../src/lib/voice/webhook';
 import { CALL, LINE, TUESDAY_8PM_CHICAGO, makeDeps, runAll } from './support/telephony-fakes';
 
@@ -51,7 +52,7 @@ function report(overrides: {
 async function aiHandoff() {
   const ctx = makeDeps({ now: () => TUESDAY_8PM_CHICAGO });
   const res = await handleIncomingCall(CALL, ctx.deps);
-  assert.match(res.twiml!, /<Sip>sip:bizcomms-org-acme@sip\.vapi\.ai/);
+  assert.match(res.twiml!, /<Sip>sip:bc-orgacme@sip\.vapi\.ai/);
   await runAll(res);
   return ctx;
 }
@@ -218,6 +219,13 @@ test('Module A: AI is never dialed for an org whose receptionist is not provisio
 // ---------------------------------------------------------------------------
 // Provisioning
 // ---------------------------------------------------------------------------
+test('SIP username for a real (UUID) org id stays under the Vapi 40-character limit', () => {
+  const uri = vapiSipUri('dacb7888-1c20-4f06-a029-d697515f4b7f', 'sip.vapi.ai');
+  const username = /^sip:([^@]+)@/.exec(uri)![1];
+  assert.equal(username, 'bc-dacb78881c204f06a029d697515f4b7f');
+  assert.ok(username.length < 40, `${username.length} chars`);
+});
+
 test('provisioning creates the assistant + SIP number once, then updates in place', async () => {
   const provider = new MockVoiceAiProvider();
   const saved: Array<{ assistantId: string; phoneNumberId: string }> = [];
@@ -234,7 +242,7 @@ test('provisioning creates the assistant + SIP number once, then updates in plac
 
   assert.deepEqual(await provisionReceptionist('org-acme', deps), { ok: true });
   const created = provider.upserts[0];
-  assert.equal(created.config.sipUri, 'sip:bizcomms-org-acme@sip.vapi.ai');
+  assert.equal(created.config.sipUri, 'sip:bc-orgacme@sip.vapi.ai');
   assert.match(created.config.firstMessage, /automated assistant, and this call may be recorded/);
   assert.match(created.config.systemPrompt, /24\/7 emergency service/);
   assert.match(created.config.systemPrompt, /call 911/);

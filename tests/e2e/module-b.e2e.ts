@@ -116,8 +116,8 @@ async function main() {
     const caller1 = nanp('773');
     const incoming = await twilioPost('/api/incoming-call', { CallSid: sid1, From: caller1, To: businessNumber });
     check(
-      'TwiML dials sip:bizcomms-<orgId>@sip.vapi.ai with call-sid and org headers',
-      incoming.body.includes(`<Sip>sip:bizcomms-${orgId}@sip.vapi.ai?X-bizcomms_org_id=${orgId}&amp;X-bizcomms_call_sid=${sid1}</Sip>`),
+      'TwiML dials the org Vapi SIP number (bc-<orgId>, under 40 chars) with call-sid and org headers',
+      incoming.body.includes(`<Sip>sip:bc-${orgId.replace(/-/g, '')}@sip.vapi.ai?X-bizcomms_org_id=${orgId}&amp;X-bizcomms_call_sid=${sid1}</Sip>`),
       incoming.body
     );
     check('AI leg reports back to the action URL (leg=ai)', incoming.body.includes(`action="${BASE}/api/incoming-call/action?leg=ai"`), incoming.body);

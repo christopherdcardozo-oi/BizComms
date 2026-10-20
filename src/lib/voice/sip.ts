@@ -1,8 +1,9 @@
 // Vapi routes SIP calls by the sipUri of a Vapi "phone number" resource (provider "vapi"), not
 // by assistant ID. Each organization gets one, at a deterministic address derived from its id,
 // so the voice router never needs an extra lookup to know where to dial.
+// Vapi requires the SIP username to be under 40 characters: "bc-" + the UUID without dashes = 35.
 export function vapiSipUsername(organizationId: string): string {
-  return `bizcomms-${organizationId}`;
+  return `bc-${organizationId.replace(/-/g, '').toLowerCase()}`;
 }
 
 export function vapiSipUri(organizationId: string, sipHost: string): string {

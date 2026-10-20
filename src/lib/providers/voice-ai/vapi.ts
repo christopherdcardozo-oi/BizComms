@@ -13,11 +13,11 @@ export interface VapiAuthConfig {
 export class VapiProvider implements IVoiceAiProvider {
   constructor(private auth: VapiAuthConfig) {}
 
-  private async request<T>(method: 'POST' | 'PATCH', path: string, body: unknown): Promise<T> {
+  private async request<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${VAPI_API}${path}`, {
       method,
       headers: { Authorization: `Bearer ${this.auth.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
@@ -58,14 +58,21 @@ export class VapiProvider implements IVoiceAiProvider {
       ? await this.request<{ id: string }>('PATCH', `/assistant/${existing.assistantId}`, this.assistantBody(config))
       : await this.request<{ id: string }>('POST', '/assistant', this.assistantBody(config));
 
-    const phone = existing?.phoneNumberId
-      ? await this.request<{ id: string }>('PATCH', `/phone-number/${existing.phoneNumberId}`, { assistantId: assistant.id })
-      : await this.request<{ id: string }>('POST', '/phone-number', {
-          provider: 'vapi',
-          sipUri: config.sipUri,
-          assistantId: assistant.id,
-          name: `${config.businessName}`.slice(0, 40),
-        });
+    let phone: { id: string };
+    try {
+      phone = existing?.phoneNumberId
+        ? await this.request<{ id: string }>('PATCH', `/phone-number/${existing.phoneNumberId}`, { assistantId: assistant.id })
+        : await this.request<{ id: string }>('POST', '/phone-number', {
+            provider: 'vapi',
+            sipUri: config.sipUri,
+            assistantId: assistant.id,
+            name: `${config.businessName}`.slice(0, 40),
+          });
+    } catch (err) {
+      // Don't leave a brand-new assistant orphaned in the account when its SIP number fails.
+      if (!existing?.assistantId) await this.request('DELETE', `/assistant/${assistant.id}`).catch(() => undefined);
+      throw err;
+    }
 
     return { assistantId: assistant.id, phoneNumberId: phone.id };
   }
