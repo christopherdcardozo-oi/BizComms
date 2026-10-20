@@ -10,6 +10,7 @@ import { getReviewEngineDeps } from '@/lib/reviews/server';
 export interface ReviewActionState {
   error?: string;
   notice?: string;
+  publishedText?: string; // set when a reply was just published, so the card can show it right away
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -55,7 +56,9 @@ export async function approveAndPublish(_prev: ReviewActionState, formData: Form
     getReviewEngineDeps()
   );
   revalidatePath('/dashboard/reviews');
-  return result.ok ? { notice: 'Published to Google.' } : { error: PUBLISH_ERRORS[result.error] };
+  return result.ok
+    ? { notice: 'Published to Google.', publishedText: String(formData.get('replyText') ?? '').trim() }
+    : { error: PUBLISH_ERRORS[result.error] };
 }
 
 export async function syncReviewsNow(_prev: ReviewActionState): Promise<ReviewActionState> {

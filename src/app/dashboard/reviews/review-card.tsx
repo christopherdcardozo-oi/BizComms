@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/input';
 import { Stars } from '@/components/ui/stars';
 import type { ReviewRow } from '@/lib/dashboard/queries';
-import { approveAndPublish, saveReviewDraft } from './actions';
+import { approveAndPublish, saveReviewDraft, type ReviewActionState } from './actions';
 
 const STATUS: Record<ReviewRow['reply_status'], { label: string; tone: 'success' | 'warning' | 'secondary' | 'destructive' | 'default' }> = {
   published: { label: 'Replied', tone: 'success' },
@@ -19,11 +19,26 @@ const STATUS: Record<ReviewRow['reply_status'], { label: string; tone: 'success'
   skipped: { label: 'Skipped', tone: 'secondary' },
 };
 
-export function ReviewCard({ review, date, canPublish }: { review: ReviewRow; date: string; canPublish: boolean }) {
-  const [draftState, draftAction, saving] = useActionState(saveReviewDraft, {});
-  const [publishState, publishAction, publishing] = useActionState(approveAndPublish, {});
-  const status = STATUS[review.reply_status];
-  const published = review.reply_status === 'published';
+type ReviewAction = (prev: ReviewActionState, formData: FormData) => Promise<ReviewActionState>;
+
+export function ReviewCard({
+  review,
+  date,
+  canPublish,
+  draftAction: saveDraft = saveReviewDraft,
+  publishAction: publish = approveAndPublish,
+}: {
+  review: ReviewRow;
+  date: string;
+  canPublish: boolean;
+  draftAction?: ReviewAction;
+  publishAction?: ReviewAction;
+}) {
+  const [draftState, draftAction, saving] = useActionState(saveDraft, {});
+  const [publishState, publishAction, publishing] = useActionState(publish, {});
+  const published = review.reply_status === 'published' || !!publishState.publishedText;
+  const status = STATUS[published ? 'published' : review.reply_status];
+  const replyText = publishState.publishedText ?? review.reply_text;
   const state = publishState.error || publishState.notice ? publishState : draftState;
 
   return (
@@ -40,9 +55,12 @@ export function ReviewCard({ review, date, canPublish }: { review: ReviewRow; da
         {review.comment ? <p className="text-sm">{review.comment}</p> : <p className="text-sm italic text-muted-foreground">Rating only, no text.</p>}
 
         {published ? (
-          <div className="rounded-lg bg-muted px-3 py-2 text-sm ring-1 ring-inset ring-border/60">
-            <span className="text-xs font-medium text-muted-foreground">Your reply</span>
-            <p>{review.reply_text}</p>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1 border-t pt-3 text-sm">
+              <span className="text-xs font-medium text-muted-foreground">Your reply</span>
+              <p>{replyText}</p>
+            </div>
+            {publishState.notice ? <Alert variant="success">{publishState.notice}</Alert> : null}
           </div>
         ) : review.reply_status === 'pending' || review.reply_status === 'generating' ? (
           <p className="text-sm text-muted-foreground">The AI will draft a reply on the next sync.</p>

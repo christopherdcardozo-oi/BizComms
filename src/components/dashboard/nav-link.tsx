@@ -6,7 +6,8 @@ import { cn } from '@/lib/ui/cn';
 
 export function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
-  const active = href === '/dashboard' ? pathname === href : pathname.startsWith(href);
+  // Section roots (/dashboard, /demo) match exactly; deeper links also match their sub-pages.
+  const active = pathname === href || (href.split('/').length > 2 && pathname.startsWith(`${href}/`));
   return (
     <Link
       href={href}

@@ -83,7 +83,7 @@ export default function LandingPage() {
               <Link href="/signup">Get started</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <a href="#how">See how it works</a>
+              <Link href="/demo">See a live demo</Link>
             </Button>
           </div>
           <p style={i(3)} className="text-sm text-muted-foreground">

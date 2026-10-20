@@ -4,10 +4,18 @@ import { useActionState, useEffect, useRef } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/input';
-import { replyToConversation } from '../../actions';
+import { replyToConversation, type ReplyState } from '../../actions';
 
-export function ReplyForm({ to, disabledReason }: { to: string; disabledReason?: string }) {
-  const [state, action, pending] = useActionState(replyToConversation, {});
+export function ReplyForm({
+  to,
+  disabledReason,
+  action: replyAction = replyToConversation,
+}: {
+  to: string;
+  disabledReason?: string;
+  action?: (prev: ReplyState, formData: FormData) => Promise<ReplyState>;
+}) {
+  const [state, action, pending] = useActionState(replyAction, {});
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
