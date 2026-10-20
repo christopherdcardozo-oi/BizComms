@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { ReceptionistDemo, ReviewDemo, TextBackDemo } from '@/components/marketing/demo-cards';
+import { Pricing } from '@/components/marketing/pricing';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/lib/site';
 
@@ -140,6 +141,8 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      <Pricing />
 
       {/* FAQ */}
       <section id="faq" className="scroll-mt-20">

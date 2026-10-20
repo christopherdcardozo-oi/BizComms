@@ -23,6 +23,9 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <a href="#how" className="hover:text-foreground">
               How it works
             </a>
+            <a href="#pricing" className="hover:text-foreground">
+              Pricing
+            </a>
             <a href="#faq" className="hover:text-foreground">
               FAQ
             </a>
