@@ -34,6 +34,10 @@ export function getTelephonyDeps(): TelephonyDeps {
     actionUrl: (leg) => webhookUrl(`/api/incoming-call/action?leg=${leg}`),
     smsStatusUrl: webhookUrl('/api/sms/status'),
     smsKeywordReplies: serverEnv.smsKeywordReplies(),
-    vapi: { sipEndpoint: serverEnv.vapiSipEndpoint(), defaultAssistantId: serverEnv.vapiDefaultAssistantId() },
+    vapi: {
+      sipEndpoint: serverEnv.vapiSipEndpoint(),
+      defaultSipUri: serverEnv.vapiDefaultSipUri(),
+      webhookSecret: serverEnv.vapiWebhookSecret(),
+    },
   };
 }

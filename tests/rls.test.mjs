@@ -818,6 +818,77 @@ async function runTestSuite() {
           '42501'
         ),
     },
+    {
+      id: 48,
+      name: 'apply_ai_call_report binds a call log to one Vapi call; a different Vapi call cannot overwrite it',
+      role: 'service_role',
+      claims: null,
+      run: async (c) => {
+        const org = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+        await c.query(`SELECT public.upsert_call_log('CA_t48', '${org}', '+13125550100', '+12025550101', 'in-progress', 'forwarded_to_ai')`);
+        const apply = (vapiId, outcome, transcript) =>
+          c.query(
+            `SELECT outcome, transcript, vapi_call_id FROM public.apply_ai_call_report('CA_t48', '${org}', $1, 'customer-ended-call', $2::call_outcome, 95, $3, 'Booked a drain cleaning', NULL)`,
+            [vapiId, outcome, transcript]
+          );
+        const first = (await apply('vapi-1', 'ai_conversation_completed', 'Hello, Acme Plumbing...')).rows[0];
+        const hijack = (await apply('vapi-2', 'caller_abandoned_before_ai', 'evil')).rows[0];
+        const row = (await c.query("SELECT outcome, transcript, vapi_call_id, duration_seconds FROM public.call_logs WHERE call_sid = 'CA_t48'")).rows[0];
+        const pass =
+          first.vapi_call_id === 'vapi-1' &&
+          hijack.vapi_call_id === null &&
+          row.outcome === 'ai_conversation_completed' &&
+          row.transcript === 'Hello, Acme Plumbing...' &&
+          row.duration_seconds === 95;
+        return {
+          pass,
+          received: `outcome: ${row.outcome}, vapi_call_id: ${row.vapi_call_id}, duration: ${row.duration_seconds}, hijack returned: ${hijack.vapi_call_id}`,
+          expected: 'outcome: ai_conversation_completed, vapi_call_id: vapi-1, duration: 95, hijack returned: null',
+        };
+      },
+    },
+    {
+      id: 49,
+      name: 'apply_ai_call_report is scoped to the organization',
+      role: 'service_role',
+      claims: null,
+      run: async (c) => {
+        await c.query("SELECT public.upsert_call_log('CA_t49', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '+13125550100', '+12025550101', 'in-progress', 'forwarded_to_ai')");
+        const res = await c.query(
+          "SELECT vapi_call_id FROM public.apply_ai_call_report('CA_t49', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'vapi-x', NULL, 'ai_conversation_completed', 10, NULL, NULL, NULL)"
+        );
+        const row = (await c.query("SELECT vapi_call_id FROM public.call_logs WHERE call_sid = 'CA_t49'")).rows[0];
+        return {
+          pass: res.rows[0].vapi_call_id === null && row.vapi_call_id === null,
+          received: `returned: ${res.rows[0].vapi_call_id}, stored: ${row.vapi_call_id}`,
+          expected: 'returned: null, stored: null',
+        };
+      },
+    },
+    {
+      id: 50,
+      name: 'Authenticated client cannot execute apply_ai_call_report (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "SELECT public.apply_ai_call_report('CA_x', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'v', NULL, NULL, 0, NULL, NULL, NULL)",
+          '42501'
+        ),
+    },
+    {
+      id: 51,
+      name: 'Owner cannot point their org at another Vapi phone number (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "UPDATE public.organizations SET vapi_phone_number_id = 'someone-elses' WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'",
+          '42501'
+        ),
+    },
   ];
 
   console.log(`=== RUNNING ${tests.length} ASSERTIONS (TRANSACTION ISOLATED & ROLLED BACK) ===\n`);

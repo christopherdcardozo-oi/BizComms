@@ -10,6 +10,7 @@ import { UsageGuard } from '../src/lib/billing/usage-guard';
 process.env.USE_MOCK_TELEPHONY ??= 'true';
 process.env.USE_MOCK_SMS ??= 'true';
 process.env.USE_MOCK_BILLING ??= 'true';
+process.env.USE_MOCK_VOICE_AI ??= 'true';
 
 async function main() {
   console.log('--- BizComms OS: Local Simulation Script ---');
@@ -37,13 +38,17 @@ async function main() {
   });
   console.log('✓ Missed-call SMS dispatched:', smsResult);
 
-  // 3. Voice AI Provider
+  // 3. Voice AI Provider (AI receptionist provisioning)
   const voiceAi = getVoiceAiProvider();
-  const astResult = await voiceAi.createOrUpdateAssistant({
-    name: 'Acme Receptionist',
+  const receptionist = await voiceAi.upsertReceptionist({
+    organizationId: 'org-test-123',
+    businessName: 'Acme Plumbing',
     systemPrompt: 'You are the receptionist for Acme Plumbing. Be polite, concise, and helpful.',
+    firstMessage: 'Thanks for calling Acme Plumbing! How can I help?',
+    sipUri: 'sip:bizcomms-org-test-123@sip.vapi.ai',
+    webhookUrl: 'https://api.bizcomms.example/api/vapi/webhook',
   });
-  console.log('✓ Voice AI Assistant configured:', astResult);
+  console.log('✓ Voice AI receptionist provisioned:', receptionist);
 
   // 4. LLM Provider (Google Review Reply Generation)
   const llm = getLlmProvider();

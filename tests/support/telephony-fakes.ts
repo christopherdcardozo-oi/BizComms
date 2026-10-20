@@ -5,7 +5,9 @@ import type { BusinessHours } from '../../src/lib/telephony/business-hours';
 import { LineConfigCache } from '../../src/lib/telephony/line-cache';
 import type { MessageStatus, OptOutSource } from '../../src/types/database.types';
 import type {
+  AiCallReportRecord,
   CallLogUpsert,
+  CallRef,
   CallRepository,
   InboundMessageRecord,
   LineConfig,
@@ -42,13 +44,19 @@ export const LINE: LineConfig = {
   businessName: 'Acme Plumbing & Drain',
   timezone: 'America/Chicago',
   businessHours: WEEKDAY_HOURS,
-  vapiAssistantId: 'ast-acme',
+  vapiPhoneNumberId: 'vapi-pn-acme',
   subscriptionStatus: 'active',
 };
 
+type FakeCallLog = CallLogUpsert & { smsRescued: boolean; createdAt?: string; vapiCallId?: string } & Partial<Omit<AiCallReportRecord, 'callSid' | 'organizationId' | 'vapiCallId' | 'outcome' | 'durationSeconds'>>;
+
 export class InMemoryRepo implements CallRepository {
   lines = new Map<string, LineConfig>([[LINE.twilioPhoneNumber, LINE]]);
-  callLogs = new Map<string, CallLogUpsert & { smsRescued: boolean }>();
+  callLogs = new Map<string, FakeCallLog>();
+  vapiPhoneNumbers = new Map<string, string>([['vapi-pn-acme', LINE.organizationId]]);
+  voiceSeconds = 0;
+  // Same clock as the handlers under test (makeDeps wires it), so time-window queries line up.
+  now: () => Date = () => new Date();
   messages: OutboundMessageRecord[] = [];
   inbound: InboundMessageRecord[] = [];
   optOuts = new Set<string>();
@@ -72,7 +80,7 @@ export class InMemoryRepo implements CallRepository {
     if (this.failWrites) throw new Error('db down');
     this.upsertCalls++;
     const prev = this.callLogs.get(input.callSid);
-    const merged = { smsRescued: false, ...prev, ...stripUndefined(input) } as CallLogUpsert & { smsRescued: boolean };
+    const merged = { smsRescued: false, createdAt: this.now().toISOString(), ...prev, ...stripUndefined(input) } as FakeCallLog;
     this.callLogs.set(input.callSid, merged);
     return { id: `log-${input.callSid}` };
   }
@@ -97,13 +105,13 @@ export class InMemoryRepo implements CallRepository {
   async incrementSmsUsage() {
     this.smsUsage++;
   }
-  async beginWebhookEvent(_p: 'twilio', id: string) {
+  async beginWebhookEvent(_p: 'twilio' | 'vapi', id: string) {
     if (this.failWrites) throw new Error('db down');
     if (this.events.get(id)) return 'duplicate' as const;
     this.events.set(id, false);
     return 'new' as const;
   }
-  async completeWebhookEvent(_p: 'twilio', id: string) {
+  async completeWebhookEvent(_p: 'twilio' | 'vapi', id: string) {
     this.events.set(id, true);
   }
   async recordInboundMessage(input: InboundMessageRecord) {
@@ -117,6 +125,42 @@ export class InMemoryRepo implements CallRepository {
     const key = `${org}:${phone}`;
     if (!this.optOuts.has(key)) this.optOutSources.set(key, source);
     this.optOuts.add(key);
+  }
+  private ref(callSid: string, c: FakeCallLog): CallRef {
+    return { callSid, organizationId: c.organizationId, fromNumber: c.fromNumber, toNumber: c.toNumber, vapiCallId: c.vapiCallId ?? null };
+  }
+  async findCallBySid(callSid: string) {
+    if (this.failLookups) throw new Error('db down');
+    const c = this.callLogs.get(callSid);
+    return c ? this.ref(callSid, c) : null;
+  }
+  async findOrganizationByVapiPhoneNumber(id: string) {
+    return this.vapiPhoneNumbers.get(id) ?? null;
+  }
+  async findRecentAiHandoffs(caller: string, since: string, org?: string) {
+    return [...this.callLogs.entries()]
+      .filter(([, c]) => c.fromNumber === caller && c.outcome === 'forwarded_to_ai' && !c.vapiCallId && (c.createdAt ?? '') >= since)
+      .filter(([, c]) => !org || c.organizationId === org)
+      .sort(([, a], [, b]) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+      .slice(0, 2)
+      .map(([sid, c]) => this.ref(sid, c));
+  }
+  async applyAiCallReport(input: AiCallReportRecord) {
+    if (this.failWrites) throw new Error('db down');
+    const c = this.callLogs.get(input.callSid);
+    if (!c || c.organizationId !== input.organizationId) return false;
+    if (c.vapiCallId && c.vapiCallId !== input.vapiCallId) return false;
+    c.vapiCallId = input.vapiCallId;
+    if (input.outcome) c.outcome = input.outcome;
+    c.endedReason = input.endedReason;
+    c.durationSeconds = Math.max(c.durationSeconds ?? 0, input.durationSeconds);
+    c.transcript = input.transcript;
+    c.summary = input.summary;
+    c.recordingUrl = input.recordingUrl;
+    return true;
+  }
+  async incrementVoiceUsage(_org: string, seconds: number) {
+    this.voiceSeconds += seconds;
   }
   async hasPriorContact(org: string, phone: string) {
     return (
@@ -163,9 +207,10 @@ export function makeDeps(overrides: Partial<TelephonyDeps> = {}) {
     actionUrl: (leg) => `https://app.test/api/incoming-call/action?leg=${leg}`,
     smsStatusUrl: 'https://app.test/api/sms/status',
     smsKeywordReplies: 'twilio',
-    vapi: { sipEndpoint: 'sip.vapi.ai' },
+    vapi: { sipEndpoint: 'sip.vapi.ai', webhookSecret: 'vapi-test-secret' },
     ...overrides,
   };
+  repo.now = deps.now;
   return { deps, repo, sms, buffered, logs };
 }
 

@@ -1,27 +1,21 @@
-export interface CreateAssistantParams {
-  name: string;
+export interface ReceptionistConfig {
+  organizationId: string;
+  businessName: string;
   systemPrompt: string;
-  firstMessage?: string;
-  voiceId?: string;
-  provider?: 'vapi' | 'retell';
+  firstMessage: string;
+  sipUri: string; // sip:bizcomms-<orgId>@sip.vapi.ai
+  webhookUrl: string;
 }
 
-export interface AssistantResult {
+export interface ProvisionedReceptionist {
   assistantId: string;
-  sipUri: string;
-}
-
-export interface WebhookCallEvent {
-  messageType: 'status-update' | 'end-of-call-report' | 'transcript';
-  callId: string;
-  durationSeconds?: number;
-  transcript?: string;
-  summary?: string;
-  customerPhone?: string;
+  phoneNumberId: string;
 }
 
 export interface IVoiceAiProvider {
-  createOrUpdateAssistant(params: CreateAssistantParams): Promise<AssistantResult>;
-  verifyWebhookEvent(headers: Record<string, string>, body: string): boolean;
-  parseCallReport(payload: unknown): WebhookCallEvent;
+  // Creates the org's assistant + SIP phone number, or updates them in place when ids exist.
+  upsertReceptionist(
+    config: ReceptionistConfig,
+    existing?: { assistantId: string | null; phoneNumberId: string | null }
+  ): Promise<ProvisionedReceptionist>;
 }

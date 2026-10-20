@@ -14,6 +14,8 @@ export interface PrimaryLine {
   forward_timeout_seconds: number;
   missed_call_sms_enabled: boolean;
   missed_call_sms_template: string;
+  ai_voice_enabled: boolean;
+  after_hours_direct_to_ai: boolean;
 }
 
 export interface CallLogRow {
@@ -23,6 +25,7 @@ export interface CallLogRow {
   outcome: CallOutcome | null;
   duration_seconds: number;
   sms_rescued: boolean;
+  ai_summary: string | null;
   started_at: string | null;
   created_at: string;
 }
@@ -34,7 +37,9 @@ function fail(context: string, error: { message: string }): never {
 export async function getPrimaryLine(db: SupabaseClient): Promise<PrimaryLine | null> {
   const { data, error } = await db
     .from('twilio_configs')
-    .select('id, twilio_phone_number, twilio_phone_sid, forward_to_number, forward_timeout_seconds, missed_call_sms_enabled, missed_call_sms_template')
+    .select(
+      'id, twilio_phone_number, twilio_phone_sid, forward_to_number, forward_timeout_seconds, missed_call_sms_enabled, missed_call_sms_template, ai_voice_enabled, after_hours_direct_to_ai'
+    )
     .eq('is_primary', true)
     .maybeSingle();
   if (error) fail('getPrimaryLine', error);
@@ -42,9 +47,9 @@ export async function getPrimaryLine(db: SupabaseClient): Promise<PrimaryLine | 
 }
 
 export async function getOrganizationDetails(db: SupabaseClient, organizationId: string) {
-  const { data, error } = await db.from('organizations').select('name, timezone').eq('id', organizationId).single();
+  const { data, error } = await db.from('organizations').select('name, timezone, vapi_phone_number_id').eq('id', organizationId).single();
   if (error) fail('getOrganizationDetails', error);
-  return data as { name: string; timezone: string };
+  return data as { name: string; timezone: string; vapi_phone_number_id: string | null };
 }
 
 export async function getA2pStatus(db: SupabaseClient): Promise<A2PStatus> {
@@ -56,7 +61,7 @@ export async function getA2pStatus(db: SupabaseClient): Promise<A2PStatus> {
 export async function listCallLogs(db: SupabaseClient, limit = 100): Promise<CallLogRow[]> {
   const { data, error } = await db
     .from('call_logs')
-    .select('id, from_number, status, outcome, duration_seconds, sms_rescued, started_at, created_at')
+    .select('id, from_number, status, outcome, duration_seconds, sms_rescued, ai_summary, started_at, created_at')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) fail('listCallLogs', error);

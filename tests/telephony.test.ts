@@ -73,7 +73,7 @@ test('incoming: after hours goes straight to the AI with correlation SIP headers
   const { deps, repo } = makeDeps({ now: () => TUESDAY_8PM_CHICAGO });
   const res = await handleIncomingCall(CALL, deps);
   assert.match(res.twiml!, /action="https:\/\/app\.test\/api\/incoming-call\/action\?leg=ai"/);
-  assert.match(res.twiml!, /<Sip>sip:ast-acme@sip\.vapi\.ai\?X-BizComms-Org-Id=org-acme&amp;X-BizComms-Call-Sid=CA100<\/Sip>/);
+  assert.match(res.twiml!, /<Sip>sip:bizcomms-org-acme@sip\.vapi\.ai\?X-bizcomms_org_id=org-acme&amp;X-bizcomms_call_sid=CA100<\/Sip>/);
   await runAll(res);
   assert.equal(repo.callLogs.get('CA100')?.outcome, 'forwarded_to_ai');
 });
@@ -125,7 +125,7 @@ test('action: owner answered -> hang up and record answered_by_business', async 
 test('action: owner no-answer hands off to AI', async () => {
   const { deps, sms } = makeDeps();
   const res = await handleDialAction({ ...CALL, DialCallStatus: 'no-answer' }, 'forward', deps);
-  assert.match(res.twiml!, /<Sip>sip:ast-acme@sip\.vapi\.ai/);
+  assert.match(res.twiml!, /<Sip>sip:bizcomms-org-acme@sip\.vapi\.ai/);
   await runAll(res);
   assert.equal(sms.sentMessages.length, 0);
 });
@@ -193,10 +193,10 @@ test('rescue SMS is at-most-once even when the action callback is delivered twic
 });
 
 test('action: DB outage falls back to platform default assistant and buffers the payload', async () => {
-  const { deps, repo, buffered } = makeDeps({ vapi: { sipEndpoint: 'sip.vapi.ai', defaultAssistantId: 'ast-default' } });
+  const { deps, repo, buffered } = makeDeps({ vapi: { sipEndpoint: 'sip.vapi.ai', defaultSipUri: 'sip:bizcomms-platform@sip.vapi.ai' } });
   repo.failLookups = true;
   const res = await handleDialAction({ ...CALL, DialCallStatus: 'no-answer' }, 'forward', deps);
-  assert.match(res.twiml!, /<Sip>sip:ast-default@sip\.vapi\.ai<\/Sip>/);
+  assert.match(res.twiml!, /<Sip>sip:bizcomms-platform@sip\.vapi\.ai<\/Sip>/);
   await runAll(res);
   assert.equal(buffered[0].kind, 'twilio-dial-action');
 });

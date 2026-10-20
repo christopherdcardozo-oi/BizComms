@@ -30,6 +30,11 @@ export const serverEnv = {
   webhookBaseUrl: () => (process.env.TWILIO_WEBHOOK_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, ''),
   vapiSipEndpoint: () => process.env.VAPI_SIP_ENDPOINT ?? 'sip.vapi.ai',
   vapiDefaultAssistantId: () => process.env.VAPI_DEFAULT_ASSISTANT_ID || undefined,
+  // Platform Vapi SIP number (sip:<user>@sip.vapi.ai) used only when the database is unreachable.
+  vapiDefaultSipUri: () => process.env.VAPI_DEFAULT_SIP_URI || undefined,
+  vapiApiKey: () => process.env.VAPI_API_KEY || undefined,
+  vapiWebhookSecret: () => process.env.VAPI_WEBHOOK_SECRET || undefined,
+  useMockVoiceAi: () => flag('USE_MOCK_VOICE_AI'),
   upstashUrl: () => process.env.UPSTASH_REDIS_REST_URL || undefined,
   upstashToken: () => process.env.UPSTASH_REDIS_REST_TOKEN || undefined,
   cronSecret: () => process.env.CRON_SECRET || undefined,

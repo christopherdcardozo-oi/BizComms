@@ -20,7 +20,8 @@ export interface LineConfig {
   businessName: string;
   timezone: string;
   businessHours: BusinessHours | null;
-  vapiAssistantId: string | null;
+  // Set once the AI receptionist is provisioned (Vapi SIP number exists for this org).
+  vapiPhoneNumberId: string | null;
   subscriptionStatus: string | null;
 }
 
@@ -62,6 +63,27 @@ export interface InboundMessageRecord {
   body: string;
 }
 
+// The Twilio call an AI (Vapi) call belongs to.
+export interface CallRef {
+  callSid: string;
+  organizationId: string;
+  fromNumber: string;
+  toNumber: string;
+  vapiCallId: string | null;
+}
+
+export interface AiCallReportRecord {
+  callSid: string;
+  organizationId: string;
+  vapiCallId: string;
+  endedReason: string | null;
+  outcome?: CallOutcome;
+  durationSeconds: number;
+  transcript: string | null;
+  summary: string | null;
+  recordingUrl: string | null;
+}
+
 export interface CallRepository {
   findLineByNumber(twilioPhoneNumber: string): Promise<LineConfig | null>;
   upsertCallLog(input: CallLogUpsert): Promise<{ id: string } | null>;
@@ -74,8 +96,16 @@ export interface CallRepository {
   recordOutboundMessage(input: OutboundMessageRecord): Promise<void>;
   incrementSmsUsage(organizationId: string): Promise<void>;
   // Returns 'duplicate' only when the event was already fully processed.
-  beginWebhookEvent(provider: 'twilio', eventId: string, payload: Record<string, string>): Promise<'new' | 'duplicate'>;
-  completeWebhookEvent(provider: 'twilio', eventId: string): Promise<void>;
+  beginWebhookEvent(provider: 'twilio' | 'vapi', eventId: string, payload: Record<string, string>): Promise<'new' | 'duplicate'>;
+  completeWebhookEvent(provider: 'twilio' | 'vapi', eventId: string): Promise<void>;
+  // AI receptionist (Module B)
+  findCallBySid(callSid: string): Promise<CallRef | null>;
+  findOrganizationByVapiPhoneNumber(phoneNumberId: string): Promise<string | null>;
+  // Most recent first; AI handoffs not yet bound to a Vapi call.
+  findRecentAiHandoffs(callerNumber: string, since: string, organizationId?: string): Promise<CallRef[]>;
+  // False when the call log is missing, in another org, or already bound to a different Vapi call.
+  applyAiCallReport(input: AiCallReportRecord): Promise<boolean>;
+  incrementVoiceUsage(organizationId: string, seconds: number): Promise<void>;
   // Inbound SMS (Module C). 'duplicate' when this MessageSid was already stored.
   recordInboundMessage(input: InboundMessageRecord): Promise<'new' | 'duplicate'>;
   recordOptOut(organizationId: string, phoneNumber: string, source: OptOutSource): Promise<void>;
@@ -116,7 +146,8 @@ export interface TelephonyDeps {
   smsStatusUrl: string;
   // Who answers STOP/START/HELP: Twilio's built-in (Advanced) Opt-Out, or this app.
   smsKeywordReplies: 'twilio' | 'app';
-  vapi: { sipEndpoint: string; defaultAssistantId?: string };
+  // defaultSipUri: platform-level Vapi SIP number used only in degraded mode (DB unreachable).
+  vapi: { sipEndpoint: string; defaultSipUri?: string; webhookSecret?: string };
 }
 
 export type DialLeg = 'forward' | 'ai';

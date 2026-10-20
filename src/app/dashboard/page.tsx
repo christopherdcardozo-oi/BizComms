@@ -69,6 +69,7 @@ export default async function CallsPage({ searchParams }: { searchParams: Promis
                       <td className="whitespace-nowrap py-2 pr-4 tabular-nums">{formatNanp(call.from_number)}</td>
                       <td className="py-2 pr-4">
                         {outcome ? <Badge variant={outcome.tone}>{outcome.label}</Badge> : <Badge variant="outline">{call.status}</Badge>}
+                        {call.ai_summary ? <p className="mt-1 max-w-md text-xs text-muted-foreground">{call.ai_summary}</p> : null}
                       </td>
                       <td className="py-2 pr-4 tabular-nums">{formatDuration(call.duration_seconds)}</td>
                       <td className="py-2">{call.sms_rescued ? <Badge variant="success">Sent</Badge> : <span className="text-muted-foreground">—</span>}</td>

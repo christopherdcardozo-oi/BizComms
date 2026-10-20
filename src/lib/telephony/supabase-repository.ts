@@ -3,7 +3,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { A2PStatus, MessageStatus, OptOutSource } from '../../types/database.types';
 import type { BusinessHours } from './business-hours';
 import type {
+  AiCallReportRecord,
   CallLogUpsert,
+  CallRef,
   CallRepository,
   InboundMessageRecord,
   LineConfig,
@@ -28,7 +30,7 @@ interface LineRow {
     name: string;
     timezone: string;
     business_hours: BusinessHours | null;
-    vapi_assistant_id: string | null;
+    vapi_phone_number_id: string | null;
     subscription_status: string | null;
   };
 }
@@ -48,7 +50,7 @@ export class SupabaseCallRepository implements CallRepository {
         .select(
           'id, organization_id, twilio_phone_number, forward_to_number, forward_timeout_seconds, abandon_threshold_seconds, ' +
             'missed_call_sms_enabled, missed_call_sms_template, ai_voice_enabled, after_hours_direct_to_ai, ' +
-            'organizations!inner(name, timezone, business_hours, vapi_assistant_id, subscription_status)'
+            'organizations!inner(name, timezone, business_hours, vapi_phone_number_id, subscription_status)'
         )
         .eq('twilio_phone_number', twilioPhoneNumber)
         .maybeSingle(),
@@ -69,7 +71,7 @@ export class SupabaseCallRepository implements CallRepository {
       businessName: row.organizations.name,
       timezone: row.organizations.timezone,
       businessHours: row.organizations.business_hours,
-      vapiAssistantId: row.organizations.vapi_assistant_id,
+      vapiPhoneNumberId: row.organizations.vapi_phone_number_id,
       subscriptionStatus: row.organizations.subscription_status,
     };
   }
@@ -164,7 +166,7 @@ export class SupabaseCallRepository implements CallRepository {
     );
   }
 
-  async beginWebhookEvent(provider: 'twilio', eventId: string, payload: Record<string, string>): Promise<'new' | 'duplicate'> {
+  async beginWebhookEvent(provider: 'twilio' | 'vapi', eventId: string, payload: Record<string, string>): Promise<'new' | 'duplicate'> {
     const inserted = check(
       await this.db
         .from('webhook_events')
@@ -188,7 +190,7 @@ export class SupabaseCallRepository implements CallRepository {
     return existing?.processed_at ? 'duplicate' : 'new';
   }
 
-  async completeWebhookEvent(provider: 'twilio', eventId: string): Promise<void> {
+  async completeWebhookEvent(provider: 'twilio' | 'vapi', eventId: string): Promise<void> {
     check(
       await this.db
         .from('webhook_events')
@@ -275,5 +277,79 @@ export class SupabaseCallRepository implements CallRepository {
       'updateMessageStatus lookup'
     ) as { organization_id: string; to_number: string } | null;
     return row ? { organizationId: row.organization_id, toNumber: row.to_number } : null;
+  }
+
+  private static toCallRef(row: { call_sid: string; organization_id: string; from_number: string; to_number: string; vapi_call_id: string | null }): CallRef {
+    return {
+      callSid: row.call_sid,
+      organizationId: row.organization_id,
+      fromNumber: row.from_number,
+      toNumber: row.to_number,
+      vapiCallId: row.vapi_call_id,
+    };
+  }
+
+  async findCallBySid(callSid: string): Promise<CallRef | null> {
+    const row = check(
+      await this.db
+        .from('call_logs')
+        .select('call_sid, organization_id, from_number, to_number, vapi_call_id')
+        .eq('call_sid', callSid)
+        .maybeSingle(),
+      'findCallBySid'
+    ) as Parameters<typeof SupabaseCallRepository.toCallRef>[0] | null;
+    return row ? SupabaseCallRepository.toCallRef(row) : null;
+  }
+
+  async findOrganizationByVapiPhoneNumber(phoneNumberId: string): Promise<string | null> {
+    const row = check(
+      await this.db.from('organizations').select('id').eq('vapi_phone_number_id', phoneNumberId).maybeSingle(),
+      'findOrganizationByVapiPhoneNumber'
+    ) as { id: string } | null;
+    return row?.id ?? null;
+  }
+
+  async findRecentAiHandoffs(callerNumber: string, since: string, organizationId?: string): Promise<CallRef[]> {
+    let query = this.db
+      .from('call_logs')
+      .select('call_sid, organization_id, from_number, to_number, vapi_call_id')
+      .eq('from_number', callerNumber)
+      .eq('outcome', 'forwarded_to_ai')
+      .is('vapi_call_id', null)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(2);
+    if (organizationId) query = query.eq('organization_id', organizationId);
+    const rows = check(await query, 'findRecentAiHandoffs') as Parameters<typeof SupabaseCallRepository.toCallRef>[0][] | null;
+    return (rows ?? []).map(SupabaseCallRepository.toCallRef);
+  }
+
+  async applyAiCallReport(input: AiCallReportRecord): Promise<boolean> {
+    const row = check(
+      await this.db
+        .rpc('apply_ai_call_report', {
+          p_call_sid: input.callSid,
+          p_org_id: input.organizationId,
+          p_vapi_call_id: input.vapiCallId,
+          p_ended_reason: input.endedReason,
+          p_outcome: input.outcome ?? null,
+          p_duration_seconds: input.durationSeconds,
+          p_transcript: input.transcript,
+          p_summary: input.summary,
+          p_recording_url: input.recordingUrl,
+        })
+        .maybeSingle(),
+      'applyAiCallReport'
+    ) as { id: string | null } | null;
+    return Boolean(row?.id);
+  }
+
+  async incrementVoiceUsage(organizationId: string, seconds: number): Promise<void> {
+    const now = new Date();
+    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+    check(
+      await this.db.rpc('increment_usage', { p_org_id: organizationId, p_period_start: periodStart, p_voice_seconds: seconds }),
+      'incrementVoiceUsage'
+    );
   }
 }

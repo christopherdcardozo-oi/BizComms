@@ -1,5 +1,6 @@
 import type { CallOutcome, CallStatus } from '../../types/database.types';
 import { billingAllowsService } from '../billing/status';
+import { CALL_SID_HEADER, ORG_ID_HEADER, vapiSipUri } from '../voice/sip';
 import { isWithinBusinessHours } from './business-hours';
 import { E164, rescueMissedCall } from './rescue-sms';
 import type { DialLeg, LineConfig, TelephonyDeps, WebhookResponse } from './types';
@@ -13,10 +14,11 @@ const UNAVAILABLE_MESSAGE = "Sorry, we can't take your call right now. We'll fol
 
 type Params = Record<string, string>;
 
-function aiAssistantFor(line: LineConfig, deps: TelephonyDeps): string | null {
-  if (deps.killSwitch || !line.aiVoiceEnabled) return null;
+// The org's AI receptionist SIP address, or null when the AI must not take this call.
+function aiSipUriFor(line: LineConfig, deps: TelephonyDeps): string | null {
+  if (deps.killSwitch || !line.aiVoiceEnabled || !line.vapiPhoneNumberId) return null;
   if (!billingAllowsService(line.subscriptionStatus)) return null;
-  return line.vapiAssistantId ?? deps.vapi.defaultAssistantId ?? null;
+  return vapiSipUri(line.organizationId, deps.vapi.sipEndpoint);
 }
 
 async function hasVoiceQuota(line: LineConfig, deps: TelephonyDeps): Promise<boolean> {
@@ -29,10 +31,10 @@ async function hasVoiceQuota(line: LineConfig, deps: TelephonyDeps): Promise<boo
   }
 }
 
-function sipHandoff(assistantId: string, line: LineConfig, callSid: string, deps: TelephonyDeps): string {
+function sipHandoff(sipUri: string, line: LineConfig, callSid: string, deps: TelephonyDeps): string {
   return deps.telephony.buildSipHandoffTwiML({
-    sipEndpoint: `sip:${assistantId}@${deps.vapi.sipEndpoint}`,
-    sipHeaders: { 'X-BizComms-Org-Id': line.organizationId, 'X-BizComms-Call-Sid': callSid },
+    sipEndpoint: sipUri,
+    sipHeaders: { [ORG_ID_HEADER]: line.organizationId, [CALL_SID_HEADER]: callSid },
     actionUrl: deps.actionUrl('ai'),
   });
 }
@@ -69,13 +71,13 @@ export async function handleIncomingCall(params: Params, deps: TelephonyDeps): P
     return { status: 200, twiml: deps.telephony.buildRejectTwiML() };
   }
 
-  const assistantId = aiAssistantFor(line, deps);
+  const aiSipUri = aiSipUriFor(line, deps);
   const afterHours = !isWithinBusinessHours(line.businessHours, line.timezone, deps.now());
   const directToAi =
-    afterHours && line.afterHoursDirectToAi && assistantId !== null && (await hasVoiceQuota(line, deps));
+    afterHours && line.afterHoursDirectToAi && aiSipUri !== null && (await hasVoiceQuota(line, deps));
 
   const twiml = directToAi
-    ? sipHandoff(assistantId!, line, callSid, deps)
+    ? sipHandoff(aiSipUri!, line, callSid, deps)
     : deps.telephony.buildForwardTwiML({
         forwardToNumber: line.forwardToNumber,
         ringTimeoutSeconds: line.forwardTimeoutSeconds,
@@ -119,11 +121,11 @@ export async function handleDialAction(params: Params, leg: DialLeg, deps: Telep
       ? safely(deps, 'Replay buffer enqueue', () => buffer.enqueue('twilio-dial-action', { ...params, leg }))
       : undefined;
     // Degraded mode (DESIGN_NOTES §6): still try the platform default AI receptionist.
-    const fallbackAssistant = deps.killSwitch ? undefined : deps.vapi.defaultAssistantId;
-    if (leg === 'forward' && dialStatus !== 'completed' && dialStatus !== 'canceled' && fallbackAssistant) {
+    const fallbackSipUri = deps.killSwitch ? undefined : deps.vapi.defaultSipUri;
+    if (leg === 'forward' && dialStatus !== 'completed' && dialStatus !== 'canceled' && fallbackSipUri) {
       return {
         status: 200,
-        twiml: deps.telephony.buildSipHandoffTwiML({ sipEndpoint: `sip:${fallbackAssistant}@${deps.vapi.sipEndpoint}` }),
+        twiml: deps.telephony.buildSipHandoffTwiML({ sipEndpoint: fallbackSipUri }),
         background,
       };
     }
@@ -165,9 +167,9 @@ export async function handleDialAction(params: Params, leg: DialLeg, deps: Telep
 
   // no-answer / busy / failed: the caller is still holding.
   if (leg === 'forward') {
-    const assistantId = aiAssistantFor(lineConfig, deps);
-    if (assistantId && (await hasVoiceQuota(lineConfig, deps))) {
-      return { status: 200, twiml: sipHandoff(assistantId, lineConfig, callSid, deps), background: record('forwarded_to_ai') };
+    const sipUri = aiSipUriFor(lineConfig, deps);
+    if (sipUri && (await hasVoiceQuota(lineConfig, deps))) {
+      return { status: 200, twiml: sipHandoff(sipUri, lineConfig, callSid, deps), background: record('forwarded_to_ai') };
     }
     return { ...hangup(UNAVAILABLE_MESSAGE), background: rescue(undefined, 'missed_call_texted') };
   }

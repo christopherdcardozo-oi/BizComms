@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { canManage, requireOrganization } from '@/lib/auth/session';
-import { serverEnv } from '@/lib/config/env';
+import { billingAllowsService } from '@/lib/billing/status';
+import { getVoiceAiProvider } from '@/lib/providers/voice-ai';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { provisionReceptionist } from '@/lib/voice/receptionist';
+import { SupabaseReceptionistStore } from '@/lib/voice/supabase-receptionist-store';
+import { serverEnv, webhookUrl } from '@/lib/config/env';
 import { getBillingProvider } from '@/lib/providers/billing';
 import { getPrimaryLine } from '@/lib/dashboard/queries';
 import { failOpenUrlFor } from '@/lib/numbers/server';
@@ -135,4 +140,43 @@ export async function openBillingPortal(_prev: BillingPortalState): Promise<Bill
     return { error: 'Could not open billing. Please try again.' };
   }
   redirect(url);
+}
+
+export interface ReceptionistState {
+  error?: string;
+  saved?: boolean;
+}
+
+export async function updateReceptionist(_prev: ReceptionistState, formData: FormData): Promise<ReceptionistState> {
+  const session = await requireOrganization();
+  if (!canManage(session.role)) return { error: 'Only owners and admins can change the AI receptionist.' };
+
+  const enable = formData.get('intent') === 'enable';
+  const afterHoursDirect = formData.get('afterHoursDirectToAi') === 'on';
+  const line = await getPrimaryLine(session.supabase);
+  if (!line) return { error: 'Add a business number first.' };
+
+  if (enable) {
+    if (!billingAllowsService(session.subscriptionStatus)) return { error: 'Your subscription is inactive. Update billing first.' };
+    const limit = await rateLimiterFallback.limit(`receptionist:${session.organizationId}`, 5, 300);
+    if (!limit.success) return { error: 'Too many attempts. Wait a few minutes and try again.' };
+
+    const result = await provisionReceptionist(session.organizationId, {
+      provider: getVoiceAiProvider(),
+      store: new SupabaseReceptionistStore(getSupabaseAdmin()),
+      sipHost: serverEnv.vapiSipEndpoint(),
+      webhookUrl: webhookUrl('/api/vapi/webhook'),
+    });
+    if (!result.ok) return { error: 'Could not set up the AI receptionist. Please try again.' };
+  }
+
+  // Routing preference is client-writable through RLS + column grants.
+  const { error } = await session.supabase
+    .from('twilio_configs')
+    .update({ ai_voice_enabled: enable, after_hours_direct_to_ai: enable && afterHoursDirect })
+    .eq('id', line.id);
+  if (error) return { error: 'Could not save. Please try again.' };
+
+  revalidatePath('/dashboard/settings');
+  return { saved: true };
 }

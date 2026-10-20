@@ -4,6 +4,7 @@ import { describeSubscription } from '@/lib/billing/status';
 import { getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
 import { BillingCard } from './billing-card';
+import { ReceptionistCard } from './receptionist-card';
 import { SettingsForm } from './settings-form';
 
 export const metadata = { title: 'Settings · BizComms' };
@@ -34,6 +35,14 @@ export default async function SettingsPage() {
           ) : null}
         </CardContent>
       </Card>
+      {line ? (
+        <ReceptionistCard
+          enabled={line.ai_voice_enabled}
+          afterHoursDirectToAi={line.after_hours_direct_to_ai}
+          ringSeconds={line.forward_timeout_seconds}
+          canEdit={canManage(session.role)}
+        />
+      ) : null}
       {session.stripeCustomerId ? (
         <BillingCard
           statusLabel={describeSubscription(session.subscriptionStatus)}
