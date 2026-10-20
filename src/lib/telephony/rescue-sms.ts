@@ -73,6 +73,7 @@ export async function rescueMissedCall(
     from: line.twilioPhoneNumber,
     body,
     messagingServiceSid: a2p?.messagingServiceSid ?? undefined,
+    statusCallback: deps.smsStatusUrl,
   });
 
   await repo.recordOutboundMessage({

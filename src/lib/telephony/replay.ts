@@ -1,5 +1,6 @@
 import type { CallOutcome } from '../../types/database.types';
 import type { ReplayOutcome, ReplayProcessor } from '../queue/replay-drain';
+import { applyInboundSms, handleSmsStatus } from '../sms/handlers';
 import { handleCallStatus } from './handlers';
 import { E164 } from './rescue-sms';
 import type { TelephonyDeps } from './types';
@@ -17,6 +18,17 @@ export function telephonyReplayProcessors(deps: TelephonyDeps): Record<string, R
       return status === 400 ? 'drop' : 'retry';
     },
     'twilio-dial-action': ({ payload }) => replayDialActionLog(payload, replayDeps),
+    // State only: the opt-out/opt-in and message row. Keyword replies are not sent late.
+    'twilio-inbound-sms': async ({ payload }) => {
+      if (!payload.MessageSid || !payload.To) return 'drop';
+      await applyInboundSms(payload, replayDeps);
+      return 'done';
+    },
+    'twilio-sms-status': async ({ payload }) => {
+      const { status } = await handleSmsStatus(payload, replayDeps);
+      if (status >= 200 && status < 300) return 'done';
+      return status === 400 ? 'drop' : 'retry';
+    },
   };
 }
 

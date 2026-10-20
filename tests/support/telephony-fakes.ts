@@ -3,9 +3,11 @@ import { MockSmsProvider } from '../../src/lib/providers/sms/mock';
 import { MockTelephonyProvider } from '../../src/lib/providers/telephony/mock';
 import type { BusinessHours } from '../../src/lib/telephony/business-hours';
 import { LineConfigCache } from '../../src/lib/telephony/line-cache';
+import type { MessageStatus, OptOutSource } from '../../src/types/database.types';
 import type {
   CallLogUpsert,
   CallRepository,
+  InboundMessageRecord,
   LineConfig,
   OutboundMessageRecord,
   TelephonyDeps,
@@ -48,7 +50,9 @@ export class InMemoryRepo implements CallRepository {
   lines = new Map<string, LineConfig>([[LINE.twilioPhoneNumber, LINE]]);
   callLogs = new Map<string, CallLogUpsert & { smsRescued: boolean }>();
   messages: OutboundMessageRecord[] = [];
+  inbound: InboundMessageRecord[] = [];
   optOuts = new Set<string>();
+  optOutSources = new Map<string, OptOutSource>();
   a2p: { status: 'approved' | 'pending'; messagingServiceSid: string | null } | null = {
     status: 'approved',
     messagingServiceSid: 'MG123',
@@ -102,6 +106,33 @@ export class InMemoryRepo implements CallRepository {
   async completeWebhookEvent(_p: 'twilio', id: string) {
     this.events.set(id, true);
   }
+  async recordInboundMessage(input: InboundMessageRecord) {
+    if (this.failWrites) throw new Error('db down');
+    if (this.inbound.some((m) => m.messageSid === input.messageSid)) return 'duplicate' as const;
+    this.inbound.push(input);
+    return 'new' as const;
+  }
+  async recordOptOut(org: string, phone: string, source: OptOutSource) {
+    if (this.failWrites) throw new Error('db down');
+    const key = `${org}:${phone}`;
+    if (!this.optOuts.has(key)) this.optOutSources.set(key, source);
+    this.optOuts.add(key);
+  }
+  async clearOptOut(org: string, phone: string) {
+    if (this.failWrites) throw new Error('db down');
+    this.optOuts.delete(`${org}:${phone}`);
+  }
+  async updateMessageStatus(messageSid: string, status: MessageStatus, error?: { code?: string; message?: string }) {
+    if (this.failWrites) throw new Error('db down');
+    const message = this.messages.find((m) => m.messageSid === messageSid);
+    if (!message) return null;
+    if (!['delivered', 'undelivered', 'failed', 'received'].includes(message.status)) {
+      message.status = status;
+      message.errorCode = error?.code;
+      message.errorMessage = error?.message;
+    }
+    return { organizationId: message.organizationId, toNumber: message.toNumber };
+  }
 }
 
 function stripUndefined<T extends object>(o: T): Partial<T> {
@@ -124,6 +155,8 @@ export function makeDeps(overrides: Partial<TelephonyDeps> = {}) {
     killSwitch: false,
     requireA2pApproval: true,
     actionUrl: (leg) => `https://app.test/api/incoming-call/action?leg=${leg}`,
+    smsStatusUrl: 'https://app.test/api/sms/status',
+    smsKeywordReplies: 'twilio',
     vapi: { sipEndpoint: 'sip.vapi.ai' },
     ...overrides,
   };

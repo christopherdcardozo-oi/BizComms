@@ -1,8 +1,17 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { A2PStatus } from '../../types/database.types';
+import type { A2PStatus, MessageStatus, OptOutSource } from '../../types/database.types';
 import type { BusinessHours } from './business-hours';
-import type { CallLogUpsert, CallRepository, LineConfig, OutboundMessageRecord, UsageStatus } from './types';
+import type {
+  CallLogUpsert,
+  CallRepository,
+  InboundMessageRecord,
+  LineConfig,
+  OutboundMessageRecord,
+  UsageStatus,
+} from './types';
+
+const TERMINAL_MESSAGE_STATUSES = ['delivered', 'undelivered', 'failed', 'received'];
 
 interface LineRow {
   id: string;
@@ -188,5 +197,64 @@ export class SupabaseCallRepository implements CallRepository {
         .eq('event_id', eventId),
       'completeWebhookEvent'
     );
+  }
+
+  async recordInboundMessage(input: InboundMessageRecord): Promise<'new' | 'duplicate'> {
+    const inserted = check(
+      await this.db
+        .from('messages')
+        .upsert(
+          {
+            organization_id: input.organizationId,
+            message_sid: input.messageSid,
+            from_number: input.fromNumber,
+            to_number: input.toNumber,
+            body: input.body,
+            direction: 'inbound',
+            status: 'received',
+            type: 'manual_chat',
+          },
+          { onConflict: 'message_sid', ignoreDuplicates: true }
+        )
+        .select('id'),
+      'recordInboundMessage'
+    ) as { id: string }[] | null;
+    return inserted && inserted.length > 0 ? 'new' : 'duplicate';
+  }
+
+  async recordOptOut(organizationId: string, phoneNumber: string, source: OptOutSource): Promise<void> {
+    check(
+      await this.db
+        .from('sms_opt_outs')
+        .upsert(
+          { organization_id: organizationId, phone_number: phoneNumber, source },
+          { onConflict: 'organization_id,phone_number', ignoreDuplicates: true }
+        ),
+      'recordOptOut'
+    );
+  }
+
+  async clearOptOut(organizationId: string, phoneNumber: string): Promise<void> {
+    check(
+      await this.db.from('sms_opt_outs').delete().eq('organization_id', organizationId).eq('phone_number', phoneNumber),
+      'clearOptOut'
+    );
+  }
+
+  async updateMessageStatus(messageSid: string, status: MessageStatus, error?: { code?: string; message?: string }) {
+    // Receipts arrive out of order (sent after delivered); never move a terminal status back.
+    check(
+      await this.db
+        .from('messages')
+        .update({ status, error_code: error?.code ?? null, error_message: error?.message ?? null })
+        .eq('message_sid', messageSid)
+        .not('status', 'in', `(${TERMINAL_MESSAGE_STATUSES.join(',')})`),
+      'updateMessageStatus'
+    );
+    const row = check(
+      await this.db.from('messages').select('organization_id, to_number').eq('message_sid', messageSid).maybeSingle(),
+      'updateMessageStatus lookup'
+    ) as { organization_id: string; to_number: string } | null;
+    return row ? { organizationId: row.organization_id, toNumber: row.to_number } : null;
   }
 }
