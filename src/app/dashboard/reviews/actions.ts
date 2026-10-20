@@ -19,6 +19,7 @@ const PUBLISH_ERRORS: Record<string, string> = {
   too_long: 'Keep the reply under 4,000 characters.',
   not_connected: 'Connect your Google Business Profile in Settings first.',
   billing_inactive: 'Your subscription is inactive. Update billing in Settings.',
+  not_in_plan: 'Google review replies are included in the Complete plan. Change your plan in Settings → Billing.',
   publish_failed: 'Google rejected the reply. Your draft is saved; try again in a minute.',
 };
 
@@ -71,6 +72,7 @@ export async function syncReviewsNow(_prev: ReviewActionState): Promise<ReviewAc
     revalidatePath('/dashboard/reviews');
     if (report.skipped === 'not_connected' || report.skipped === 'no_config') return { error: PUBLISH_ERRORS.not_connected };
     if (report.skipped === 'billing_inactive') return { error: PUBLISH_ERRORS.billing_inactive };
+    if (report.skipped === 'not_in_plan') return { error: PUBLISH_ERRORS.not_in_plan };
     return { notice: `Synced: ${report.imported} new, ${report.drafted} drafted, ${report.published} auto-published.` };
   } catch {
     return { error: 'Could not reach Google. Try reconnecting in Settings.' };

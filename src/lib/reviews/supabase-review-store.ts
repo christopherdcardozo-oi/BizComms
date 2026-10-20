@@ -16,7 +16,7 @@ export class SupabaseReviewStore implements ReviewStore {
     const row = must(
       await this.admin
         .from('google_configs')
-        .select('google_account_id, google_location_id, auto_reply_enabled, auto_reply_min_stars, auto_publish_min_stars, reply_tone, custom_reply_instructions, organizations!inner(name, subscription_status)')
+        .select('google_account_id, google_location_id, auto_reply_enabled, auto_reply_min_stars, auto_publish_min_stars, reply_tone, custom_reply_instructions, organizations!inner(name, subscription_status, stripe_price_id)')
         .eq('organization_id', organizationId)
         .maybeSingle(),
       'getConfig'
@@ -28,13 +28,14 @@ export class SupabaseReviewStore implements ReviewStore {
       auto_publish_min_stars: number;
       reply_tone: string;
       custom_reply_instructions: string | null;
-      organizations: { name: string; subscription_status: string | null };
+      organizations: { name: string; subscription_status: string | null; stripe_price_id: string | null };
     } | null;
     if (!row) return null;
     return {
       organizationId,
       businessName: row.organizations.name,
       subscriptionStatus: row.organizations.subscription_status,
+      stripePriceId: row.organizations.stripe_price_id,
       accountId: row.google_account_id,
       locationId: row.google_location_id,
       autoReplyEnabled: row.auto_reply_enabled,

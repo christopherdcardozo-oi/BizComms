@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { canManage, requireOrganization } from '@/lib/auth/session';
+import { PLAN_NAMES, planForPrice } from '@/lib/billing/plans';
 import { describeSubscription } from '@/lib/billing/status';
 import { getGoogleConnection, getOrganizationDetails, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
@@ -60,6 +61,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <GoogleCard connection={google} canEdit={canManage(session.role)} result={googleResult} />
       {session.stripeCustomerId ? (
         <BillingCard
+          planName={PLAN_NAMES[planForPrice(session.stripePriceId)]}
           statusLabel={describeSubscription(session.subscriptionStatus)}
           healthy={session.subscriptionStatus === 'active' || session.subscriptionStatus === 'trialing'}
           canEdit={canManage(session.role)}

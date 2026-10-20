@@ -16,6 +16,7 @@ const CONNECT_RESULTS: Record<string, { text: string; ok: boolean }> = {
   expired: { text: 'That connection attempt expired. Please try again.', ok: false },
   no_locations: { text: 'That Google account doesn’t manage any business locations.', ok: false },
   billing: { text: 'Your subscription is inactive. Update billing first.', ok: false },
+  plan: { text: 'Google review replies are included in the Complete plan. Change your plan under Billing below.', ok: false },
   forbidden: { text: 'Only owners and admins can connect Google.', ok: false },
   unavailable: { text: 'Google connection isn’t available right now.', ok: false },
   failed: { text: 'Connecting Google failed. Please try again.', ok: false },

@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { canManage, requireOrganization, requireUser } from '@/lib/auth/session';
+import { checkoutPriceFor, isPlanId } from '@/lib/billing/plans';
 import { canProvisionNumber } from '@/lib/billing/status';
 import { serverEnv } from '@/lib/config/env';
 import { getBillingProvider } from '@/lib/providers/billing';
@@ -119,12 +120,14 @@ export interface CheckoutState {
   error?: string;
 }
 
-export async function startCheckout(_prev: CheckoutState): Promise<CheckoutState> {
+export async function startCheckout(_prev: CheckoutState, formData: FormData): Promise<CheckoutState> {
   const session = await requireOrganization();
   if (!canManage(session.role)) return { error: 'Only owners and admins can manage billing.' };
   if (canProvisionNumber(session.subscriptionStatus)) redirect('/onboarding');
 
-  const priceId = serverEnv.stripePriceId();
+  const plan = formData.get('plan');
+  if (!isPlanId(plan)) return { error: 'Choose a plan.' };
+  const priceId = checkoutPriceFor(plan);
   if (!priceId && !serverEnv.useMockBilling()) return { error: 'Billing is not configured yet. Please contact support.' };
 
   const limit = await rateLimiterFallback.limit(`checkout:${session.organizationId}`, 5, 300);
@@ -138,6 +141,7 @@ export async function startCheckout(_prev: CheckoutState): Promise<CheckoutState
       customerId: session.stripeCustomerId ?? undefined,
       customerEmail: session.email,
       priceId: priceId ?? 'price_mock',
+      setupFeePriceId: serverEnv.stripeSetupFeePriceId(),
       trialDays: serverEnv.stripeTrialDays(),
       successUrl: `${appUrl}/onboarding/billing/return?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${appUrl}/onboarding?checkout=canceled`,

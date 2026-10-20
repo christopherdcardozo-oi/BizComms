@@ -23,6 +23,8 @@ export interface LineConfig {
   // Set once the AI receptionist is provisioned (Vapi SIP number exists for this org).
   vapiPhoneNumberId: string | null;
   subscriptionStatus: string | null;
+  // Stripe price of the subscription; decides the plan's features (billing/plans.ts).
+  stripePriceId?: string | null;
 }
 
 export interface UsageStatus {

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { canManage, requireOrganization } from '@/lib/auth/session';
+import { planFeatures } from '@/lib/billing/plans';
 import { billingAllowsService } from '@/lib/billing/status';
 import { getVoiceAiProvider } from '@/lib/providers/voice-ai';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
@@ -159,6 +160,9 @@ export async function updateReceptionist(_prev: ReceptionistState, formData: For
 
   if (enable) {
     if (!billingAllowsService(session.subscriptionStatus)) return { error: 'Your subscription is inactive. Update billing first.' };
+    if (!planFeatures(session.stripePriceId).aiReceptionist) {
+      return { error: 'The AI receptionist is included in the Receptionist and Complete plans. Change your plan under Billing below.' };
+    }
     const limit = await rateLimiterFallback.limit(`receptionist:${session.organizationId}`, 5, 300);
     if (!limit.success) return { error: 'Too many attempts. Wait a few minutes and try again.' };
 

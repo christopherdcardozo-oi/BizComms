@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { openBillingPortal } from '../actions';
 
-export function BillingCard({ statusLabel, healthy, canEdit }: { statusLabel: string; healthy: boolean; canEdit: boolean }) {
+export function BillingCard({ planName, statusLabel, healthy, canEdit }: { planName: string; statusLabel: string; healthy: boolean; canEdit: boolean }) {
   const [state, action, pending] = useActionState(openBillingPortal, {});
   return (
     <Card className="max-w-2xl">
@@ -15,7 +15,9 @@ export function BillingCard({ statusLabel, healthy, canEdit }: { statusLabel: st
         <CardTitle className="flex items-center gap-3">
           Billing <Badge variant={healthy ? 'success' : 'warning'}>{statusLabel}</Badge>
         </CardTitle>
-        <CardDescription>Update your card, download invoices, or cancel your subscription.</CardDescription>
+        <CardDescription>
+          You&apos;re on the {planName} plan. Change plans, update your card, download invoices, or cancel your subscription.
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {state.error ? <Alert variant="destructive">{state.error}</Alert> : null}

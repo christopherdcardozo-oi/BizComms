@@ -13,6 +13,7 @@ export interface CheckoutParams {
   customerId?: string; // reuse when re-subscribing after a cancellation
   customerEmail?: string;
   priceId: string;
+  setupFeePriceId?: string; // one-time price added to the first invoice
   successUrl: string; // must contain {CHECKOUT_SESSION_ID}
   cancelUrl: string;
   trialDays?: number;

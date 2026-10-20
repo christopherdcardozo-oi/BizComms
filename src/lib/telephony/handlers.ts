@@ -1,4 +1,5 @@
 import type { CallOutcome, CallStatus } from '../../types/database.types';
+import { planFeatures } from '../billing/plans';
 import { billingAllowsService } from '../billing/status';
 import { CALL_SID_HEADER, ORG_ID_HEADER, vapiSipUri } from '../voice/sip';
 import { isWithinBusinessHours } from './business-hours';
@@ -18,6 +19,8 @@ type Params = Record<string, string>;
 function aiSipUriFor(line: LineConfig, deps: TelephonyDeps): string | null {
   if (deps.killSwitch || !line.aiVoiceEnabled || !line.vapiPhoneNumberId) return null;
   if (!billingAllowsService(line.subscriptionStatus)) return null;
+  // Not in the plan: the owner's phone still rings and missed callers still get the text-back.
+  if (!planFeatures(line.stripePriceId).aiReceptionist) return null;
   return vapiSipUri(line.organizationId, deps.vapi.sipEndpoint);
 }
 

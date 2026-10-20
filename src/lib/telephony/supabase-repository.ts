@@ -32,6 +32,7 @@ interface LineRow {
     business_hours: BusinessHours | null;
     vapi_phone_number_id: string | null;
     subscription_status: string | null;
+    stripe_price_id: string | null;
   };
 }
 
@@ -50,7 +51,7 @@ export class SupabaseCallRepository implements CallRepository {
         .select(
           'id, organization_id, twilio_phone_number, forward_to_number, forward_timeout_seconds, abandon_threshold_seconds, ' +
             'missed_call_sms_enabled, missed_call_sms_template, ai_voice_enabled, after_hours_direct_to_ai, ' +
-            'organizations!inner(name, timezone, business_hours, vapi_phone_number_id, subscription_status)'
+            'organizations!inner(name, timezone, business_hours, vapi_phone_number_id, subscription_status, stripe_price_id)'
         )
         .eq('twilio_phone_number', twilioPhoneNumber)
         .maybeSingle(),
@@ -73,6 +74,7 @@ export class SupabaseCallRepository implements CallRepository {
       businessHours: row.organizations.business_hours,
       vapiPhoneNumberId: row.organizations.vapi_phone_number_id,
       subscriptionStatus: row.organizations.subscription_status,
+      stripePriceId: row.organizations.stripe_price_id,
     };
   }
 

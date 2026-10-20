@@ -6,6 +6,7 @@ import { serverEnv } from '@/lib/config/env';
 import { NumberStep } from './number-step';
 import { OrgForm } from './org-form';
 import { PlanStep } from './plan-step';
+import { pricing } from '@/lib/site';
 
 export const metadata = { title: 'Get started · BizComms' };
 
@@ -51,7 +52,10 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
         <CardContent>
           {step === 'business' ? <OrgForm /> : null}
           {step === 'plan' ? (
-            <PlanStep trialDays={serverEnv.stripeTrialDays()} notice={checkout ? CHECKOUT_NOTICES[checkout] : undefined} />
+            <PlanStep
+              trialDays={serverEnv.stripeTrialDays()}
+              setupFee={serverEnv.stripeSetupFeePriceId() ? pricing.setupFee : undefined}
+              notice={checkout ? CHECKOUT_NOTICES[checkout] : undefined} />
           ) : null}
           {step === 'number' ? <NumberStep /> : null}
         </CardContent>

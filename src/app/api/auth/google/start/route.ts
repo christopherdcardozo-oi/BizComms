@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { canManage, getSessionContext } from '@/lib/auth/session';
+import { planFeatures } from '@/lib/billing/plans';
 import { billingAllowsService } from '@/lib/billing/status';
 import { createOAuthState } from '@/lib/google/oauth-state';
 import { getReviewsProvider } from '@/lib/providers/reviews';
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.redirect(new URL('/login?next=/dashboard/settings', request.url));
   if (!session.organizationId || !canManage(session.role)) return NextResponse.redirect(new URL('/dashboard/settings?google=forbidden', request.url));
   if (!billingAllowsService(session.subscriptionStatus)) return NextResponse.redirect(new URL('/dashboard/settings?google=billing', request.url));
+  if (!planFeatures(session.stripePriceId).reviews) return NextResponse.redirect(new URL('/dashboard/settings?google=plan', request.url));
 
   try {
     const state = createOAuthState(session.organizationId, oauthStateSecret());

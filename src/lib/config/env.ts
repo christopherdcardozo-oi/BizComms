@@ -17,6 +17,14 @@ export const serverEnv = {
   stripeSecretKey: () => process.env.STRIPE_SECRET_KEY || undefined,
   stripeWebhookSecret: () => process.env.STRIPE_WEBHOOK_SECRET || undefined,
   stripePriceId: () => process.env.STRIPE_PRICE_STARTER || undefined,
+  // One Stripe price per plan. Leave all three unset to sell the single STRIPE_PRICE_STARTER price.
+  stripePlanPrices: () => ({
+    'text-back': process.env.STRIPE_PRICE_TEXT_BACK || undefined,
+    receptionist: process.env.STRIPE_PRICE_RECEPTIONIST || undefined,
+    complete: process.env.STRIPE_PRICE_COMPLETE || undefined,
+  }),
+  // Optional one-time setup fee charged with the first invoice (a one-time Stripe price).
+  stripeSetupFeePriceId: () => process.env.STRIPE_PRICE_SETUP_FEE || undefined,
   stripeTrialDays: () => {
     const days = Number.parseInt(process.env.STRIPE_TRIAL_DAYS ?? '', 10);
     return Number.isFinite(days) && days > 0 ? days : undefined;

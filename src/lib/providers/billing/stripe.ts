@@ -41,7 +41,10 @@ export class StripeBillingProvider implements IBillingProvider {
   async createCheckoutSession(params: CheckoutParams): Promise<{ sessionId: string; url: string }> {
     const session = await this.stripe.checkout.sessions.create({
       mode: 'subscription',
-      line_items: [{ price: params.priceId, quantity: 1 }],
+      line_items: [
+        { price: params.priceId, quantity: 1 },
+        ...(params.setupFeePriceId ? [{ price: params.setupFeePriceId, quantity: 1 }] : []),
+      ],
       client_reference_id: params.organizationId,
       ...(params.customerId ? { customer: params.customerId } : { customer_email: params.customerEmail }),
       subscription_data: {

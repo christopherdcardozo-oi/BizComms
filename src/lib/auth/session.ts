@@ -15,6 +15,7 @@ export interface SessionContext {
   subscriptionStatus: string | null;
   subscriptionStatusChangedAt: string | null;
   stripeCustomerId: string | null;
+  stripePriceId: string | null;
 }
 
 // Data-access-layer entry point: verifies the session with Supabase Auth (getUser, not the
@@ -26,7 +27,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
 
   const { data: profile } = await supabase
     .from('users')
-    .select('organization_id, role, email, organizations(name, subscription_status, subscription_status_changed_at, stripe_customer_id)')
+    .select('organization_id, role, email, organizations(name, subscription_status, subscription_status_changed_at, stripe_customer_id, stripe_price_id)')
     .eq('id', data.user.id)
     .maybeSingle();
   const row = profile as {
@@ -38,6 +39,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
       subscription_status: string | null;
       subscription_status_changed_at: string | null;
       stripe_customer_id: string | null;
+      stripe_price_id: string | null;
     } | null;
   } | null;
 
@@ -51,6 +53,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
     subscriptionStatus: row?.organizations?.subscription_status ?? null,
     subscriptionStatusChangedAt: row?.organizations?.subscription_status_changed_at ?? null,
     stripeCustomerId: row?.organizations?.stripe_customer_id ?? null,
+    stripePriceId: row?.organizations?.stripe_price_id ?? null,
   };
 });
 

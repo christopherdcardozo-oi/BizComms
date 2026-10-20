@@ -1,3 +1,4 @@
+import { planFeatures } from '../billing/plans';
 import { billingAllowsService } from '../billing/status';
 import { decryptToken, encryptToken } from '../crypto/token-cipher';
 import type { ILlmProvider } from '../providers/llm/types';
@@ -7,6 +8,7 @@ export interface ReviewConfig {
   organizationId: string;
   businessName: string;
   subscriptionStatus: string | null;
+  stripePriceId?: string | null;
   accountId: string | null;
   locationId: string | null;
   autoReplyEnabled: boolean;
@@ -77,7 +79,7 @@ export interface ReviewEngineDeps {
 }
 
 export interface SyncReport {
-  skipped?: 'not_connected' | 'billing_inactive' | 'no_config';
+  skipped?: 'not_connected' | 'billing_inactive' | 'not_in_plan' | 'no_config';
   imported: number;
   drafted: number;
   published: number;
@@ -124,6 +126,7 @@ export async function syncOrganizationReviews(organizationId: string, deps: Revi
   if (!config) return { ...report, skipped: 'no_config' };
   if (!config.accountId || !config.locationId) return { ...report, skipped: 'not_connected' };
   if (!billingAllowsService(config.subscriptionStatus)) return { ...report, skipped: 'billing_inactive' };
+  if (!planFeatures(config.stripePriceId).reviews) return { ...report, skipped: 'not_in_plan' };
 
   const accessToken = await getAccessToken(organizationId, deps);
   const location = { accountId: config.accountId, locationId: config.locationId, accessToken };
@@ -179,7 +182,7 @@ export async function syncOrganizationReviews(organizationId: string, deps: Revi
   return report;
 }
 
-export type PublishResult = { ok: true } | { ok: false; error: 'empty' | 'too_long' | 'not_connected' | 'billing_inactive' | 'publish_failed' };
+export type PublishResult = { ok: true } | { ok: false; error: 'empty' | 'too_long' | 'not_connected' | 'billing_inactive' | 'not_in_plan' | 'publish_failed' };
 
 // Owner/admin approval from the dashboard (the role check happens in the caller).
 export async function publishApprovedReply(
@@ -192,6 +195,7 @@ export async function publishApprovedReply(
   const config = await deps.store.getConfig(input.organizationId);
   if (!config?.accountId || !config.locationId) return { ok: false, error: 'not_connected' };
   if (!billingAllowsService(config.subscriptionStatus)) return { ok: false, error: 'billing_inactive' };
+  if (!planFeatures(config.stripePriceId).reviews) return { ok: false, error: 'not_in_plan' };
 
   try {
     const accessToken = await getAccessToken(input.organizationId, deps);
