@@ -49,7 +49,70 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background font-sans text-foreground antialiased;
+    font-optical-sizing: auto;
+  }
+  /* Large type wants negative tracking and tight leading; body stays near 0. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer utilities {
+  .text-display {
+    font-size: clamp(2.25rem, 5.5vw, 4rem);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+    font-weight: 650;
+  }
+  .text-title {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    font-weight: 650;
+  }
+  .press:active {
+    transform: scale(0.97);
+  }
+  /* Staggered entrance: set --i on each child (30-80ms apart per the motion budget). */
+  .stagger > * {
+    animation: rise 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+}
+
+/* Reduced motion: keep gentle opacity (it aids comprehension), drop all movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+  .stagger > *,
+  .animate-rise,
+  .animate-message-in {
+    animation-name: fade-only !important;
+  }
+  .press:active,
+  [data-press]:active {
+    transform: none !important;
+  }
+}
+
+@keyframes fade-only {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

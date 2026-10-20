@@ -43,7 +43,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 py-12">
       <p className="text-xl font-semibold tracking-tight">BizComms</p>
       <p className="text-sm text-muted-foreground">Step {current.n} of 3</p>
-      <Card className="w-full max-w-lg">
+      <Card key={step} className="w-full max-w-lg animate-rise">
         <CardHeader>
           <CardTitle>{current.title}</CardTitle>
           <CardDescription>{current.description}</CardDescription>

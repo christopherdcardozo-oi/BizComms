@@ -44,7 +44,7 @@ export function NumberStep() {
                 <label
                   key={n.phoneNumber}
                   className={cn(
-                    'flex cursor-pointer flex-col rounded-md border p-3 text-sm transition-colors hover:bg-accent',
+                    'press flex cursor-pointer flex-col rounded-md border p-3 text-sm transition-[transform,background-color,border-color,box-shadow] duration-150 ease-out hover:bg-accent',
                     selected === n.phoneNumber && 'border-primary ring-2 ring-primary/30'
                   )}
                 >
