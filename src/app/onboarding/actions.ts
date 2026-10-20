@@ -91,6 +91,7 @@ const PURCHASE_ERRORS: Record<string, string> = {
   invalid_forward_number: 'Enter a US or Canadian cell or office number to ring (not your new business number).',
   already_has_number: 'Your business already has a number.',
   purchase_failed: 'That number was just taken or could not be purchased. Pick another one.',
+  platform_not_ready: "We can't buy phone numbers right now (the platform's phone provider account needs attention). You weren't charged. Please try again later.",
   save_failed: 'Something went wrong saving your number. You were not charged; please try again.',
 };
 

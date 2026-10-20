@@ -13,7 +13,13 @@ export interface LineStore {
 
 export type ProvisionResult =
   | { ok: true; phoneNumber: string }
-  | { ok: false; error: 'invalid_number' | 'invalid_forward_number' | 'already_has_number' | 'purchase_failed' | 'save_failed' };
+  | {
+      ok: false;
+      error: 'invalid_number' | 'invalid_forward_number' | 'already_has_number' | 'purchase_failed' | 'platform_not_ready' | 'save_failed';
+    };
+
+// Twilio account-level refusals (not this number's availability): retrying another number won't help.
+const PLATFORM_ACCOUNT_ERRORS = /trial accounts must verify|account (is )?suspended|not authorized to purchase|upgrade your account/i;
 
 // Buys a number on the platform's Twilio account, points its webhooks at us, and records it.
 // MVP cap: one number per organization (also enforced by the one-primary-per-org unique index,
@@ -38,7 +44,7 @@ export async function provisionNumber(
     purchased = await deps.provider.purchase(input.phoneNumber, deps.webhooks(input.forwardToNumber));
   } catch (err) {
     deps.logger.error('Number purchase failed', { organizationId: input.organizationId, error: String(err) });
-    return { ok: false, error: 'purchase_failed' };
+    return { ok: false, error: PLATFORM_ACCOUNT_ERRORS.test(String(err)) ? 'platform_not_ready' : 'purchase_failed' };
   }
 
   try {

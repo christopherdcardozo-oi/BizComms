@@ -178,3 +178,12 @@ test('groupConversations: one row per customer, newest first, flags who spoke la
     ]
   );
 });
+
+test('provision: a Twilio account-level refusal is reported as platform_not_ready, not "number taken"', async () => {
+  const { provider, deps } = provisioning();
+  provider.purchase = async () => {
+    throw new Error('Trial accounts must verify a phone number before purchasing a Twilio number.');
+  };
+  const result = await provisionNumber({ organizationId: 'org-1', phoneNumber: '+13125550100', forwardToNumber: '+13125559999' }, deps);
+  assert.deepEqual(result, { ok: false, error: 'platform_not_ready' });
+});
