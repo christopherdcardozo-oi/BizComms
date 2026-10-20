@@ -13,6 +13,7 @@ export interface SessionContext {
   role: UserRole;
   organizationName: string | null;
   subscriptionStatus: string | null;
+  subscriptionStatusChangedAt: string | null;
   stripeCustomerId: string | null;
 }
 
@@ -25,14 +26,19 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
 
   const { data: profile } = await supabase
     .from('users')
-    .select('organization_id, role, email, organizations(name, subscription_status, stripe_customer_id)')
+    .select('organization_id, role, email, organizations(name, subscription_status, subscription_status_changed_at, stripe_customer_id)')
     .eq('id', data.user.id)
     .maybeSingle();
   const row = profile as {
     organization_id: string | null;
     role: UserRole;
     email: string;
-    organizations: { name: string; subscription_status: string | null; stripe_customer_id: string | null } | null;
+    organizations: {
+      name: string;
+      subscription_status: string | null;
+      subscription_status_changed_at: string | null;
+      stripe_customer_id: string | null;
+    } | null;
   } | null;
 
   return {
@@ -43,6 +49,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
     role: row?.role ?? 'member',
     organizationName: row?.organizations?.name ?? null,
     subscriptionStatus: row?.organizations?.subscription_status ?? null,
+    subscriptionStatusChangedAt: row?.organizations?.subscription_status_changed_at ?? null,
     stripeCustomerId: row?.organizations?.stripe_customer_id ?? null,
   };
 });

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { serverEnv } from '@/lib/config/env';
 import { requireOrganization } from '@/lib/auth/session';
 import { billingAllowsService } from '@/lib/billing/status';
+import { releaseDate, resolveGraceDays, RELEASABLE_STATUSES } from '@/lib/numbers/release';
 import { getA2pStatus, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
 
@@ -14,6 +15,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const [line, a2pStatus] = await Promise.all([getPrimaryLine(session.supabase), getA2pStatus(session.supabase)]);
   const textingBlocked = a2pStatus !== 'approved' && !serverEnv.useMockSms();
   const billingActive = billingAllowsService(session.subscriptionStatus);
+  const releasesOn =
+    line && session.subscriptionStatusChangedAt && (RELEASABLE_STATUSES as readonly string[]).includes(session.subscriptionStatus ?? '')
+      ? releaseDate(session.subscriptionStatusChangedAt, resolveGraceDays(serverEnv.numberReleaseGraceDaysRaw()))
+      : null;
 
   return (
     <div className="min-h-dvh">
@@ -50,6 +55,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {session.subscriptionStatus === 'none'
               ? 'Start your subscription to turn on missed-call text-back. '
               : 'Your subscription is inactive: calls still ring your phone, but text-backs are paused. '}
+            {releasesOn && line
+              ? `Your number ${formatNanp(line.twilio_phone_number)} will be released on ${releasesOn.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })} unless you reactivate. `
+              : null}
             <Link
               href={session.subscriptionStatus === 'none' ? '/onboarding' : '/dashboard/settings'}
               className="font-medium underline underline-offset-4"

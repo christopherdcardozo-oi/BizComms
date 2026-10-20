@@ -782,6 +782,42 @@ async function runTestSuite() {
         return { pass: status === 'none', received: `subscription_status: ${status}`, expected: 'subscription_status: none' };
       },
     },
+    {
+      id: 46,
+      name: 'subscription_status_changed_at moves only when subscription_status changes',
+      role: 'service_role',
+      claims: null,
+      run: async (c) => {
+        const org = "'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'";
+        await c.query(`UPDATE public.organizations SET subscription_status_changed_at = '2020-01-01' WHERE id = ${org}`);
+        const pinned = (await c.query(`SELECT subscription_status_changed_at AS t FROM public.organizations WHERE id = ${org}`)).rows[0].t;
+        await c.query(`UPDATE public.organizations SET name = 'Renamed' WHERE id = ${org}`);
+        const afterRename = (await c.query(`SELECT subscription_status_changed_at AS t FROM public.organizations WHERE id = ${org}`)).rows[0].t;
+        await c.query(`UPDATE public.organizations SET subscription_status = 'canceled' WHERE id = ${org}`);
+        const afterCancel = (await c.query(`SELECT subscription_status_changed_at AS t FROM public.organizations WHERE id = ${org}`)).rows[0].t;
+        const pass =
+          pinned.getTime() > new Date('2021-01-01').getTime() && // direct backdate ignored
+          afterRename.getTime() === pinned.getTime() && // unrelated update keeps it
+          afterCancel.getTime() > pinned.getTime(); // status change moves it forward
+        return {
+          pass,
+          received: `pinned: ${pinned.toISOString()}, afterRename: ${afterRename.toISOString()}, afterCancel: ${afterCancel.toISOString()}`,
+          expected: 'backdate ignored, rename keeps it, status change moves it forward',
+        };
+      },
+    },
+    {
+      id: 47,
+      name: 'Owner cannot backdate subscription_status_changed_at (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "UPDATE public.organizations SET subscription_status_changed_at = '2000-01-01' WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'",
+          '42501'
+        ),
+    },
   ];
 
   console.log(`=== RUNNING ${tests.length} ASSERTIONS (TRANSACTION ISOLATED & ROLLED BACK) ===\n`);
