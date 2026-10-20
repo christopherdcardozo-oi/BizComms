@@ -12,6 +12,8 @@ export interface SessionContext {
   organizationId: string | null;
   role: UserRole;
   organizationName: string | null;
+  subscriptionStatus: string | null;
+  stripeCustomerId: string | null;
 }
 
 // Data-access-layer entry point: verifies the session with Supabase Auth (getUser, not the
@@ -23,10 +25,15 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
 
   const { data: profile } = await supabase
     .from('users')
-    .select('organization_id, role, email, organizations(name)')
+    .select('organization_id, role, email, organizations(name, subscription_status, stripe_customer_id)')
     .eq('id', data.user.id)
     .maybeSingle();
-  const row = profile as { organization_id: string | null; role: UserRole; email: string; organizations: { name: string } | null } | null;
+  const row = profile as {
+    organization_id: string | null;
+    role: UserRole;
+    email: string;
+    organizations: { name: string; subscription_status: string | null; stripe_customer_id: string | null } | null;
+  } | null;
 
   return {
     supabase,
@@ -35,6 +42,8 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
     organizationId: row?.organization_id ?? null,
     role: row?.role ?? 'member',
     organizationName: row?.organizations?.name ?? null,
+    subscriptionStatus: row?.organizations?.subscription_status ?? null,
+    stripeCustomerId: row?.organizations?.stripe_customer_id ?? null,
   };
 });
 

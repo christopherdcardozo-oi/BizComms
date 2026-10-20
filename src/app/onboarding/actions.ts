@@ -4,6 +4,9 @@ import { randomBytes } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { canManage, requireOrganization, requireUser } from '@/lib/auth/session';
+import { canProvisionNumber } from '@/lib/billing/status';
+import { serverEnv } from '@/lib/config/env';
+import { getBillingProvider } from '@/lib/providers/billing';
 import { normalizeNanpNumber } from '@/lib/numbers/phone';
 import { provisionNumber } from '@/lib/numbers/provision';
 import { getProvisioningDeps } from '@/lib/numbers/server';
@@ -62,6 +65,7 @@ export interface NumberSearchState {
 export async function searchNumbers(_prev: NumberSearchState, formData: FormData): Promise<NumberSearchState> {
   const session = await requireOrganization();
   if (!canManage(session.role)) return { error: 'Only owners and admins can add a phone number.' };
+  if (!canProvisionNumber(session.subscriptionStatus)) return { error: 'Start your subscription first.' };
 
   const areaCode = String(formData.get('areaCode') ?? '').trim();
   if (!/^[2-9]\d{2}$/.test(areaCode)) return { error: 'Enter a 3-digit US area code, like 312.', areaCode };
@@ -93,6 +97,8 @@ const PURCHASE_ERRORS: Record<string, string> = {
 export async function purchaseNumber(_prev: PurchaseState, formData: FormData): Promise<PurchaseState> {
   const session = await requireOrganization();
   if (!canManage(session.role)) return { error: 'Only owners and admins can add a phone number.' };
+  // Server-side gate: the status comes from the webhook-maintained column, which clients can't write.
+  if (!canProvisionNumber(session.subscriptionStatus)) redirect('/onboarding');
 
   const forwardToNumber = normalizeNanpNumber(String(formData.get('forwardTo') ?? ''));
   if (!forwardToNumber) return { error: PURCHASE_ERRORS.invalid_forward_number };
@@ -106,4 +112,38 @@ export async function purchaseNumber(_prev: PurchaseState, formData: FormData): 
   );
   if (!result.ok) return { error: PURCHASE_ERRORS[result.error] };
   redirect('/dashboard?welcome=1');
+}
+
+export interface CheckoutState {
+  error?: string;
+}
+
+export async function startCheckout(_prev: CheckoutState): Promise<CheckoutState> {
+  const session = await requireOrganization();
+  if (!canManage(session.role)) return { error: 'Only owners and admins can manage billing.' };
+  if (canProvisionNumber(session.subscriptionStatus)) redirect('/onboarding');
+
+  const priceId = serverEnv.stripePriceId();
+  if (!priceId && !serverEnv.useMockBilling()) return { error: 'Billing is not configured yet. Please contact support.' };
+
+  const limit = await rateLimiterFallback.limit(`checkout:${session.organizationId}`, 5, 300);
+  if (!limit.success) return { error: 'Too many attempts. Wait a few minutes and try again.' };
+
+  let url: string;
+  try {
+    const appUrl = serverEnv.appUrl();
+    ({ url } = await getBillingProvider().createCheckoutSession({
+      organizationId: session.organizationId,
+      customerId: session.stripeCustomerId ?? undefined,
+      customerEmail: session.email,
+      priceId: priceId ?? 'price_mock',
+      trialDays: serverEnv.stripeTrialDays(),
+      successUrl: `${appUrl}/onboarding/billing/return?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${appUrl}/onboarding?checkout=canceled`,
+    }));
+  } catch (err) {
+    console.error(JSON.stringify({ level: 'error', message: 'Checkout session creation failed', error: String(err) }));
+    return { error: 'Could not start checkout. Please try again.' };
+  }
+  redirect(url);
 }

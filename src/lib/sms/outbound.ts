@@ -1,3 +1,4 @@
+import { billingAllowsService } from '../billing/status';
 import { E164 } from '../telephony/rescue-sms';
 import type { TelephonyDeps } from '../telephony/types';
 
@@ -7,13 +8,13 @@ export type ManualReplyResult =
   | { ok: true; messageSid: string }
   | {
       ok: false;
-      error: 'empty' | 'too_long' | 'invalid_recipient' | 'no_prior_contact' | 'opted_out' | 'a2p_not_approved' | 'over_quota' | 'disabled' | 'send_failed';
+      error: 'empty' | 'too_long' | 'invalid_recipient' | 'billing_inactive' | 'no_prior_contact' | 'opted_out' | 'a2p_not_approved' | 'over_quota' | 'disabled' | 'send_failed';
     };
 
 // A staff member replying from the dashboard inbox. Same compliance gates as the rescue text,
 // plus: only people who called or texted this business first (no cold outreach from the inbox).
 export async function sendManualReply(
-  input: { organizationId: string; fromNumber: string; to: string; body: string },
+  input: { organizationId: string; fromNumber: string; to: string; body: string; subscriptionStatus: string | null },
   deps: Pick<TelephonyDeps, 'repo' | 'sms' | 'killSwitch' | 'requireA2pApproval' | 'smsStatusUrl' | 'logger'>
 ): Promise<ManualReplyResult> {
   const body = input.body.trim();
@@ -21,6 +22,7 @@ export async function sendManualReply(
   if (body.length > MAX_REPLY_LENGTH) return { ok: false, error: 'too_long' };
   if (!E164.test(input.to)) return { ok: false, error: 'invalid_recipient' };
   if (deps.killSwitch) return { ok: false, error: 'disabled' };
+  if (!billingAllowsService(input.subscriptionStatus)) return { ok: false, error: 'billing_inactive' };
 
   const { repo } = deps;
   if (!(await repo.hasPriorContact(input.organizationId, input.to))) return { ok: false, error: 'no_prior_contact' };

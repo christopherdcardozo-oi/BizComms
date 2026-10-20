@@ -9,6 +9,7 @@ import { UsageGuard } from '../src/lib/billing/usage-guard';
 // The simulator always runs against mocks; providers read these flags lazily at call time.
 process.env.USE_MOCK_TELEPHONY ??= 'true';
 process.env.USE_MOCK_SMS ??= 'true';
+process.env.USE_MOCK_BILLING ??= 'true';
 
 async function main() {
   console.log('--- BizComms OS: Local Simulation Script ---');

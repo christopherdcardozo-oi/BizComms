@@ -729,6 +729,59 @@ async function runTestSuite() {
       run: async (c) =>
         expectThrows(c, "DELETE FROM public.twilio_configs WHERE id = 'a1111111-1111-1111-1111-111111111111'", '42501'),
     },
+    {
+      id: 42,
+      name: 'Owner cannot mark their own subscription active (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "UPDATE public.organizations SET subscription_status = 'active', stripe_subscription_id = 'sub_fake' WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'",
+          '42501'
+        ),
+    },
+    {
+      id: 43,
+      name: 'Owner cannot raise their own SMS quota (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "UPDATE public.organizations SET monthly_sms_limit = 1000000 WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'",
+          '42501'
+        ),
+    },
+    {
+      id: 44,
+      name: 'Owner can still edit their business profile (name, timezone)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) => {
+        const res = await c.query(
+          "UPDATE public.organizations SET name = 'Acme Plumbing & Drain', timezone = 'America/Chicago' WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' RETURNING name, timezone"
+        );
+        const row = res.rows[0];
+        return {
+          pass: row?.name === 'Acme Plumbing & Drain' && row?.timezone === 'America/Chicago',
+          received: `name: ${row?.name}, timezone: ${row?.timezone}`,
+          expected: 'name: Acme Plumbing & Drain, timezone: America/Chicago',
+        };
+      },
+    },
+    {
+      id: 45,
+      name: 'A new organization starts with subscription_status none (not trialing)',
+      role: 'authenticated',
+      claims: { sub: '44444444-4444-4444-4444-444444444444', role: 'authenticated' },
+      run: async (c) => {
+        const created = await c.query("SELECT public.create_organization_for_user('Fresh Co', 'fresh-co') AS id");
+        const res = await c.query(`SELECT subscription_status FROM public.organizations WHERE id = '${created.rows[0].id}'`);
+        const status = res.rows[0]?.subscription_status;
+        return { pass: status === 'none', received: `subscription_status: ${status}`, expected: 'subscription_status: none' };
+      },
+    },
   ];
 
   console.log(`=== RUNNING ${tests.length} ASSERTIONS (TRANSACTION ISOLATED & ROLLED BACK) ===\n`);

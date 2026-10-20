@@ -13,6 +13,15 @@ export const serverEnv = {
   killSwitch: () => flag('EMERGENCY_KILL_SWITCH'),
   useMockTelephony: () => flag('USE_MOCK_TELEPHONY'),
   useMockSms: () => flag('USE_MOCK_SMS'),
+  useMockBilling: () => flag('USE_MOCK_BILLING'),
+  stripeSecretKey: () => process.env.STRIPE_SECRET_KEY || undefined,
+  stripeWebhookSecret: () => process.env.STRIPE_WEBHOOK_SECRET || undefined,
+  stripePriceId: () => process.env.STRIPE_PRICE_STARTER || undefined,
+  stripeTrialDays: () => {
+    const days = Number.parseInt(process.env.STRIPE_TRIAL_DAYS ?? '', 10);
+    return Number.isFinite(days) && days > 0 ? days : undefined;
+  },
+  appUrl: () => (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/+$/, ''),
   twilioAccountSid: () => process.env.TWILIO_ACCOUNT_SID ?? '',
   twilioAuthToken: () => process.env.TWILIO_AUTH_TOKEN ?? '',
   twilioMessagingServiceSid: () => process.env.TWILIO_MESSAGING_SERVICE_SID || undefined,

@@ -107,7 +107,13 @@ test('fail-open URL is HMAC-signed for exactly one destination, and absent witho
 // ---------------------------------------------------------------------------
 // Inbox replies
 // ---------------------------------------------------------------------------
-const reply = (body: string, to = CALL.From) => ({ organizationId: LINE.organizationId, fromNumber: LINE.twilioPhoneNumber, to, body });
+const reply = (body: string, to = CALL.From, subscriptionStatus: string | null = 'active') => ({
+  organizationId: LINE.organizationId,
+  fromNumber: LINE.twilioPhoneNumber,
+  to,
+  body,
+  subscriptionStatus,
+});
 
 test('reply: refuses cold outreach to someone who never called or texted', async () => {
   const { deps, sms } = makeDeps();

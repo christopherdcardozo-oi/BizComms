@@ -2,7 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { redirect } from 'next/navigation';
 import { canManage, requireOrganization } from '@/lib/auth/session';
+import { serverEnv } from '@/lib/config/env';
+import { getBillingProvider } from '@/lib/providers/billing';
 import { getPrimaryLine } from '@/lib/dashboard/queries';
 import { failOpenUrlFor } from '@/lib/numbers/server';
 import { normalizeNanpNumber } from '@/lib/numbers/phone';
@@ -21,6 +24,7 @@ const REPLY_ERRORS: Record<Exclude<ManualReplyResult, { ok: true }>['error'], st
   empty: 'Type a message first.',
   too_long: 'Keep replies under 640 characters.',
   invalid_recipient: 'That phone number is not valid.',
+  billing_inactive: 'Your subscription is inactive. Update billing in Settings to resume texting.',
   no_prior_contact: 'You can only text people who have called or texted your business.',
   opted_out: 'This customer opted out of texts. They must text START to opt back in.',
   a2p_not_approved: 'Texting is paused until your carrier registration (A2P 10DLC) is approved.',
@@ -41,7 +45,13 @@ export async function replyToConversation(_prev: ReplyState, formData: FormData)
   if (!line) return { error: 'Add a business number before texting customers.' };
 
   const result = await sendManualReply(
-    { organizationId: session.organizationId, fromNumber: line.twilio_phone_number, to, body: String(formData.get('body') ?? '') },
+    {
+      organizationId: session.organizationId,
+      fromNumber: line.twilio_phone_number,
+      to,
+      body: String(formData.get('body') ?? ''),
+      subscriptionStatus: session.subscriptionStatus,
+    },
     getTelephonyDeps()
   );
   if (!result.ok) return { error: REPLY_ERRORS[result.error] };
@@ -106,4 +116,23 @@ export async function updateLineSettings(_prev: SettingsState, formData: FormDat
 
   revalidatePath('/dashboard/settings');
   return { saved: true };
+}
+
+export interface BillingPortalState {
+  error?: string;
+}
+
+export async function openBillingPortal(_prev: BillingPortalState): Promise<BillingPortalState> {
+  const session = await requireOrganization();
+  if (!canManage(session.role)) return { error: 'Only owners and admins can manage billing.' };
+  if (!session.stripeCustomerId) redirect('/onboarding');
+
+  let url: string;
+  try {
+    ({ url } = await getBillingProvider().createPortalSession(session.stripeCustomerId, `${serverEnv.appUrl()}/dashboard/settings`));
+  } catch (err) {
+    console.error(JSON.stringify({ level: 'error', message: 'Billing portal session failed', error: String(err) }));
+    return { error: 'Could not open billing. Please try again.' };
+  }
+  redirect(url);
 }

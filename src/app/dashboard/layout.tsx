@@ -5,6 +5,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { serverEnv } from '@/lib/config/env';
 import { requireOrganization } from '@/lib/auth/session';
+import { billingAllowsService } from '@/lib/billing/status';
 import { getA2pStatus, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
 
@@ -12,6 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await requireOrganization();
   const [line, a2pStatus] = await Promise.all([getPrimaryLine(session.supabase), getA2pStatus(session.supabase)]);
   const textingBlocked = a2pStatus !== 'approved' && !serverEnv.useMockSms();
+  const billingActive = billingAllowsService(session.subscriptionStatus);
 
   return (
     <div className="min-h-dvh">
@@ -43,7 +45,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
             .
           </Alert>
         ) : null}
-        {line && textingBlocked ? (
+        {!billingActive ? (
+          <Alert variant="destructive">
+            {session.subscriptionStatus === 'none'
+              ? 'Start your subscription to turn on missed-call text-back. '
+              : 'Your subscription is inactive: calls still ring your phone, but text-backs are paused. '}
+            <Link
+              href={session.subscriptionStatus === 'none' ? '/onboarding' : '/dashboard/settings'}
+              className="font-medium underline underline-offset-4"
+            >
+              {session.subscriptionStatus === 'none' ? 'Choose a plan' : 'Update billing'}
+            </Link>
+          </Alert>
+        ) : null}
+        {line && billingActive && textingBlocked ? (
           <Alert>
             Calls are forwarding, but texts are paused until your carrier registration (A2P 10DLC) is approved
             {a2pStatus === 'pending' ? '. Approval is in progress.' : '. Contact support to start registration.'}

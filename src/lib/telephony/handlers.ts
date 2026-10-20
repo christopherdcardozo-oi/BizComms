@@ -1,4 +1,5 @@
 import type { CallOutcome, CallStatus } from '../../types/database.types';
+import { billingAllowsService } from '../billing/status';
 import { isWithinBusinessHours } from './business-hours';
 import { E164, rescueMissedCall } from './rescue-sms';
 import type { DialLeg, LineConfig, TelephonyDeps, WebhookResponse } from './types';
@@ -7,7 +8,6 @@ const TERMINAL_STATUSES: ReadonlySet<CallStatus> = new Set(['completed', 'busy',
 const CALL_STATUSES: ReadonlySet<string> = new Set([
   'queued', 'ringing', 'in-progress', 'completed', 'busy', 'failed', 'no-answer', 'canceled',
 ]);
-const INACTIVE_SUBSCRIPTIONS: ReadonlySet<string> = new Set(['canceled', 'unpaid', 'incomplete_expired', 'paused']);
 
 const UNAVAILABLE_MESSAGE = "Sorry, we can't take your call right now. We'll follow up with you shortly.";
 
@@ -15,7 +15,7 @@ type Params = Record<string, string>;
 
 function aiAssistantFor(line: LineConfig, deps: TelephonyDeps): string | null {
   if (deps.killSwitch || !line.aiVoiceEnabled) return null;
-  if (line.subscriptionStatus && INACTIVE_SUBSCRIPTIONS.has(line.subscriptionStatus)) return null;
+  if (!billingAllowsService(line.subscriptionStatus)) return null;
   return line.vapiAssistantId ?? deps.vapi.defaultAssistantId ?? null;
 }
 

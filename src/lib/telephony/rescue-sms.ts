@@ -1,4 +1,5 @@
 import type { CallOutcome } from '../../types/database.types';
+import { billingAllowsService } from '../billing/status';
 import type { LineConfig, TelephonyDeps } from './types';
 
 export const E164 = /^\+[1-9]\d{6,14}$/;
@@ -15,6 +16,7 @@ export type RescueResult =
   | 'sent'
   | 'failed'
   | 'disabled'
+  | 'billing_inactive'
   | 'invalid_caller'
   | 'opted_out'
   | 'a2p_not_approved'
@@ -49,6 +51,7 @@ export async function rescueMissedCall(
   });
 
   if (deps.killSwitch || !line.missedCallSmsEnabled) return 'disabled';
+  if (!billingAllowsService(line.subscriptionStatus)) return 'billing_inactive';
   if (await repo.isOptedOut(line.organizationId, callerNumber)) return 'opted_out';
 
   const a2p = await repo.getA2pRegistration(line.organizationId);
