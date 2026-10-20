@@ -137,3 +137,50 @@ export async function getCallDetail(db: SupabaseClient, id: string): Promise<Cal
   if (error) fail('getCallDetail', error);
   return data as CallDetail | null;
 }
+
+export interface GoogleConnection {
+  google_location_id: string | null;
+  location_name: string | null;
+  auto_reply_enabled: boolean;
+  auto_reply_min_stars: number;
+  auto_publish_min_stars: number;
+  reply_tone: string;
+  custom_reply_instructions: string | null;
+  last_synced_at: string | null;
+}
+
+export async function getGoogleConnection(db: SupabaseClient): Promise<GoogleConnection | null> {
+  const { data, error } = await db
+    .from('google_configs_safe')
+    .select('google_location_id, location_name, auto_reply_enabled, auto_reply_min_stars, auto_publish_min_stars, reply_tone, custom_reply_instructions, last_synced_at')
+    .maybeSingle();
+  if (error) fail('getGoogleConnection', error);
+  return data as GoogleConnection | null;
+}
+
+export interface ReviewRow {
+  id: string;
+  reviewer_name: string;
+  star_rating: number;
+  comment: string | null;
+  review_created_at: string;
+  sentiment: 'positive' | 'neutral' | 'negative' | null;
+  reply_text: string | null;
+  reply_status: 'pending' | 'generating' | 'manual_review' | 'published' | 'failed' | 'skipped';
+  reply_published_at: string | null;
+  reply_error: string | null;
+  ai_model: string | null;
+}
+
+export async function listReviews(db: SupabaseClient, limit = 100): Promise<ReviewRow[]> {
+  const { data, error } = await db
+    .from('reviews')
+    .select('id, reviewer_name, star_rating, comment, review_created_at, sentiment, reply_text, reply_status, reply_published_at, reply_error, ai_model')
+    .order('review_created_at', { ascending: false })
+    .limit(limit);
+  if (error) fail('listReviews', error);
+  const rows = (data ?? []) as ReviewRow[];
+  // Reviews waiting on the owner first, then everything else newest-first.
+  const needsAttention = (r: ReviewRow) => r.reply_status === 'manual_review' || r.reply_status === 'failed';
+  return [...rows.filter(needsAttention), ...rows.filter((r) => !needsAttention(r))];
+}

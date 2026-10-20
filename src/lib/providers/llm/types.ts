@@ -3,7 +3,8 @@ export interface GenerateReplyParams {
   reviewerName: string;
   starRating: number;
   reviewComment?: string;
-  tone?: 'professional' | 'warm' | 'concise';
+  tone?: string; // free text from google_configs.reply_tone
+  customInstructions?: string | null;
 }
 
 export interface GenerateReplyResult {

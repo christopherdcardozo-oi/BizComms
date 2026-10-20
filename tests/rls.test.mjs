@@ -889,6 +889,58 @@ async function runTestSuite() {
           '42501'
         ),
     },
+    {
+      id: 52,
+      name: 'Owner cannot repoint google_configs to another Google location (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "UPDATE public.google_configs SET google_location_id = 'locations/someone-else' WHERE organization_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'",
+          '42501'
+        ),
+    },
+    {
+      id: 53,
+      name: 'Owner can tune review auto-reply settings',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) => {
+        const res = await c.query(
+          "UPDATE public.google_configs SET auto_publish_min_stars = 5, reply_tone = 'friendly' WHERE organization_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' RETURNING auto_publish_min_stars"
+        );
+        const v = res.rows[0]?.auto_publish_min_stars;
+        return { pass: v === 5, received: `auto_publish_min_stars: ${v}`, expected: 'auto_publish_min_stars: 5' };
+      },
+    },
+    {
+      id: 54,
+      name: 'claim_reviews_for_reply claims pending reviews exactly once',
+      role: 'service_role',
+      claims: null,
+      run: async (c) => {
+        await c.query(`
+          INSERT INTO public.reviews (organization_id, google_review_id, reviewer_name, star_rating, review_created_at, reply_status)
+          VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'rev-t54-a', 'A', 5, now(), 'pending'),
+                 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'rev-t54-b', 'B', 1, now(), 'pending')`);
+        const first = await c.query("SELECT count(*)::int AS n FROM public.claim_reviews_for_reply('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10) WHERE google_review_id LIKE 'rev-t54-%'");
+        const second = await c.query("SELECT count(*)::int AS n FROM public.claim_reviews_for_reply('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10) WHERE google_review_id LIKE 'rev-t54-%'");
+        return {
+          pass: first.rows[0].n === 2 && second.rows[0].n === 0,
+          received: `first: ${first.rows[0].n}, second: ${second.rows[0].n}`,
+          expected: 'first: 2, second: 0',
+        };
+      },
+    },
+    {
+      id: 55,
+      name: 'Authenticated client cannot execute claim_reviews_for_reply (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(c, "SELECT * FROM public.claim_reviews_for_reply('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10)", '42501'),
+    },
   ];
 
   console.log(`=== RUNNING ${tests.length} ASSERTIONS (TRANSACTION ISOLATED & ROLLED BACK) ===\n`);

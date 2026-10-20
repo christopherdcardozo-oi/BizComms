@@ -1,20 +1,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { canManage, requireOrganization } from '@/lib/auth/session';
 import { describeSubscription } from '@/lib/billing/status';
-import { getOrganizationDetails, getPrimaryLine } from '@/lib/dashboard/queries';
+import { getGoogleConnection, getOrganizationDetails, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
 import { BillingCard } from './billing-card';
+import { GoogleCard } from './google-card';
 import { ProfileCard } from './profile-card';
 import { ReceptionistCard } from './receptionist-card';
 import { SettingsForm } from './settings-form';
 
 export const metadata = { title: 'Settings · BizComms' };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const session = await requireOrganization();
-  const [line, org] = await Promise.all([
+  const [line, org, google, { google: googleResult }] = await Promise.all([
     getPrimaryLine(session.supabase),
     getOrganizationDetails(session.supabase, session.organizationId),
+    getGoogleConnection(session.supabase),
+    searchParams,
   ]);
 
   return (
@@ -54,6 +57,7 @@ export default async function SettingsPage() {
         aiProvisioned={!!org.vapi_phone_number_id}
         canEdit={canManage(session.role)}
       />
+      <GoogleCard connection={google} canEdit={canManage(session.role)} result={googleResult} />
       {session.stripeCustomerId ? (
         <BillingCard
           statusLabel={describeSubscription(session.subscriptionStatus)}

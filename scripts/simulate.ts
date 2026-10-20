@@ -11,6 +11,7 @@ process.env.USE_MOCK_TELEPHONY ??= 'true';
 process.env.USE_MOCK_SMS ??= 'true';
 process.env.USE_MOCK_BILLING ??= 'true';
 process.env.USE_MOCK_VOICE_AI ??= 'true';
+process.env.USE_MOCK_GOOGLE_REVIEWS ??= 'true';
 
 async function main() {
   console.log('--- BizComms OS: Local Simulation Script ---');
@@ -62,7 +63,7 @@ async function main() {
 
   // 5. Google Reviews Provider
   const reviews = getReviewsProvider();
-  const reviewList = await reviews.listReviews('locations/loc-123', 'mock-token');
+  const reviewList = await reviews.listReviews({ accountId: 'accounts/mock-1', locationId: 'locations/loc-123', accessToken: 'mock-token' });
   console.log(`✓ Fetched ${reviewList.length} reviews from Google Business Profile.`);
 
   // 6. Billing & Usage Guard
