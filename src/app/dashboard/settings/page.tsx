@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { canManage, requireOrganization } from '@/lib/auth/session';
 import { describeSubscription } from '@/lib/billing/status';
-import { getPrimaryLine } from '@/lib/dashboard/queries';
+import { getOrganizationDetails, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
 import { BillingCard } from './billing-card';
+import { ProfileCard } from './profile-card';
 import { ReceptionistCard } from './receptionist-card';
 import { SettingsForm } from './settings-form';
 
@@ -11,7 +12,10 @@ export const metadata = { title: 'Settings · BizComms' };
 
 export default async function SettingsPage() {
   const session = await requireOrganization();
-  const line = await getPrimaryLine(session.supabase);
+  const [line, org] = await Promise.all([
+    getPrimaryLine(session.supabase),
+    getOrganizationDetails(session.supabase, session.organizationId),
+  ]);
 
   return (
     <>
@@ -43,6 +47,13 @@ export default async function SettingsPage() {
           canEdit={canManage(session.role)}
         />
       ) : null}
+      <ProfileCard
+        timezone={org.timezone}
+        hours={org.business_hours}
+        instructions={org.ai_receptionist_prompt ?? ''}
+        aiProvisioned={!!org.vapi_phone_number_id}
+        canEdit={canManage(session.role)}
+      />
       {session.stripeCustomerId ? (
         <BillingCard
           statusLabel={describeSubscription(session.subscriptionStatus)}

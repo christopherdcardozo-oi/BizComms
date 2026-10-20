@@ -1,6 +1,7 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { A2PStatus, CallOutcome, CallStatus } from '../../types/database.types';
+import type { BusinessHours } from '../telephony/business-hours';
 import type { InboxMessage } from './conversations';
 
 // Every query here runs through the signed-in user's RLS client: tenant isolation is enforced
@@ -47,9 +48,19 @@ export async function getPrimaryLine(db: SupabaseClient): Promise<PrimaryLine | 
 }
 
 export async function getOrganizationDetails(db: SupabaseClient, organizationId: string) {
-  const { data, error } = await db.from('organizations').select('name, timezone, vapi_phone_number_id').eq('id', organizationId).single();
+  const { data, error } = await db
+    .from('organizations')
+    .select('name, timezone, business_hours, ai_receptionist_prompt, vapi_phone_number_id')
+    .eq('id', organizationId)
+    .single();
   if (error) fail('getOrganizationDetails', error);
-  return data as { name: string; timezone: string; vapi_phone_number_id: string | null };
+  return data as {
+    name: string;
+    timezone: string;
+    business_hours: BusinessHours | null;
+    ai_receptionist_prompt: string | null;
+    vapi_phone_number_id: string | null;
+  };
 }
 
 export async function getA2pStatus(db: SupabaseClient): Promise<A2PStatus> {
@@ -107,4 +118,22 @@ export async function isContactOptedOut(db: SupabaseClient, contact: string): Pr
   const { data, error } = await db.from('sms_opt_outs').select('id').eq('phone_number', contact).maybeSingle();
   if (error) fail('isContactOptedOut', error);
   return data !== null;
+}
+
+export interface CallDetail extends CallLogRow {
+  to_number: string;
+  transcript: string | null;
+  recording_url: string | null;
+  vapi_ended_reason: string | null;
+  ended_at: string | null;
+}
+
+export async function getCallDetail(db: SupabaseClient, id: string): Promise<CallDetail | null> {
+  const { data, error } = await db
+    .from('call_logs')
+    .select('id, from_number, to_number, status, outcome, duration_seconds, sms_rescued, ai_summary, transcript, recording_url, vapi_ended_reason, started_at, ended_at, created_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) fail('getCallDetail', error);
+  return data as CallDetail | null;
 }

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { AutoRefresh } from '@/components/dashboard/auto-refresh';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -66,7 +67,11 @@ export default async function CallsPage({ searchParams }: { searchParams: Promis
                   return (
                     <tr key={call.id} className="border-b last:border-0">
                       <td className="whitespace-nowrap py-2 pr-4">{formatDateTime(call.started_at ?? call.created_at, org.timezone)}</td>
-                      <td className="whitespace-nowrap py-2 pr-4 tabular-nums">{formatNanp(call.from_number)}</td>
+                      <td className="whitespace-nowrap py-2 pr-4 tabular-nums">
+                        <Link href={`/dashboard/calls/${call.id}`} className="font-medium underline-offset-4 hover:underline">
+                          {formatNanp(call.from_number)}
+                        </Link>
+                      </td>
                       <td className="py-2 pr-4">
                         {outcome ? <Badge variant={outcome.tone}>{outcome.label}</Badge> : <Badge variant="outline">{call.status}</Badge>}
                         {call.ai_summary ? <p className="mt-1 max-w-md text-xs text-muted-foreground">{call.ai_summary}</p> : null}

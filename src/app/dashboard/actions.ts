@@ -18,6 +18,7 @@ import { getNumberProvisioningProvider } from '@/lib/providers/numbers';
 import { rateLimiterFallback } from '@/lib/ratelimit/limiter';
 import { sendManualReply, type ManualReplyResult } from '@/lib/sms/outbound';
 import { E164 } from '@/lib/telephony/rescue-sms';
+import { US_TIMEZONES } from '@/lib/timezones';
 import { getTelephonyDeps } from '@/lib/telephony/deps';
 
 export interface ReplyState {
@@ -179,4 +180,68 @@ export async function updateReceptionist(_prev: ReceptionistState, formData: For
 
   revalidatePath('/dashboard/settings');
   return { saved: true };
+}
+
+export interface ProfileState {
+  error?: string;
+  saved?: boolean;
+  aiUpdated?: boolean;
+}
+
+const WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use a valid time.');
+
+const profileSchema = z.object({
+  timezone: z.enum(US_TIMEZONES),
+  instructions: z.string().trim().max(1000, 'Keep instructions under 1,000 characters.'),
+  hours: z.record(z.enum(WEEK), z.object({ open: hhmm, close: hhmm, closed: z.boolean() })),
+});
+
+export async function updateBusinessProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
+  const session = await requireOrganization();
+  if (!canManage(session.role)) return { error: 'Only owners and admins can change business settings.' };
+
+  const parsed = profileSchema.safeParse({
+    timezone: formData.get('timezone'),
+    instructions: String(formData.get('instructions') ?? ''),
+    hours: Object.fromEntries(
+      WEEK.map((day) => [
+        day,
+        {
+          open: String(formData.get(`${day}.open`) ?? ''),
+          close: String(formData.get(`${day}.close`) ?? ''),
+          closed: formData.get(`${day}.closed`) === 'on',
+        },
+      ])
+    ),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  // Profile columns are client-writable through RLS + column grants (migration 20261022000000).
+  const { error } = await session.supabase
+    .from('organizations')
+    .update({
+      timezone: parsed.data.timezone,
+      business_hours: parsed.data.hours,
+      ai_receptionist_prompt: parsed.data.instructions || null,
+    })
+    .eq('id', session.organizationId);
+  if (error) return { error: 'Could not save. Please try again.' };
+
+  // Push new instructions to the live assistant if the receptionist is already set up.
+  let aiUpdated = false;
+  const { data: org } = await session.supabase.from('organizations').select('vapi_phone_number_id').eq('id', session.organizationId).single();
+  if ((org as { vapi_phone_number_id: string | null } | null)?.vapi_phone_number_id) {
+    const result = await provisionReceptionist(session.organizationId, {
+      provider: getVoiceAiProvider(),
+      store: new SupabaseReceptionistStore(getSupabaseAdmin()),
+      sipHost: serverEnv.vapiSipEndpoint(),
+      webhookUrl: webhookUrl('/api/vapi/webhook'),
+    });
+    if (!result.ok) return { saved: true, error: 'Saved, but the AI receptionist could not be updated. Try saving again.' };
+    aiUpdated = true;
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { saved: true, aiUpdated };
 }
