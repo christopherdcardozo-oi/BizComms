@@ -1,0 +1,31 @@
+// Centralized, lazily-read server configuration. Read at call time (not module load) so tests
+// and route handlers always see the current process.env.
+
+function flag(name: string, defaultValue = false): boolean {
+  const raw = process.env[name];
+  if (raw === undefined) return defaultValue;
+  return raw.trim().toLowerCase() === 'true';
+}
+
+export const isProduction = () => process.env.NODE_ENV === 'production';
+
+export const serverEnv = {
+  killSwitch: () => flag('EMERGENCY_KILL_SWITCH'),
+  useMockTelephony: () => flag('USE_MOCK_TELEPHONY'),
+  useMockSms: () => flag('USE_MOCK_SMS'),
+  twilioAccountSid: () => process.env.TWILIO_ACCOUNT_SID ?? '',
+  twilioAuthToken: () => process.env.TWILIO_AUTH_TOKEN ?? '',
+  twilioMessagingServiceSid: () => process.env.TWILIO_MESSAGING_SERVICE_SID || undefined,
+  // Public origin Twilio actually calls; used for signature validation and callback URLs.
+  // Never derive this from the incoming request, which is rewritten by proxies/tunnels.
+  webhookBaseUrl: () => (process.env.TWILIO_WEBHOOK_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, ''),
+  vapiSipEndpoint: () => process.env.VAPI_SIP_ENDPOINT ?? 'sip.vapi.ai',
+  vapiDefaultAssistantId: () => process.env.VAPI_DEFAULT_ASSISTANT_ID || undefined,
+  upstashUrl: () => process.env.UPSTASH_REDIS_REST_URL || undefined,
+  upstashToken: () => process.env.UPSTASH_REDIS_REST_TOKEN || undefined,
+  cronSecret: () => process.env.CRON_SECRET || undefined,
+};
+
+export function webhookUrl(pathWithQuery: string): string {
+  return `${serverEnv.webhookBaseUrl()}${pathWithQuery}`;
+}

@@ -1,0 +1,19 @@
+# dependencies & caches
+node_modules/
+.npm-cache/
+
+# Next.js build output
+.next/
+out/
+*.tsbuildinfo
+
+# embedded Postgres test cluster (tests/rls.test.mjs)
+data/
+
+# environment — only the example template is tracked
+.env*
+!.env.local.example
+
+# OS / editor
+.DS_Store
+*.log
