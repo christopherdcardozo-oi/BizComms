@@ -118,6 +118,12 @@ export class InMemoryRepo implements CallRepository {
     if (!this.optOuts.has(key)) this.optOutSources.set(key, source);
     this.optOuts.add(key);
   }
+  async hasPriorContact(org: string, phone: string) {
+    return (
+      [...this.callLogs.values()].some((c) => c.organizationId === org && c.fromNumber === phone) ||
+      this.inbound.some((m) => m.organizationId === org && m.fromNumber === phone)
+    );
+  }
   async clearOptOut(org: string, phone: string) {
     if (this.failWrites) throw new Error('db down');
     this.optOuts.delete(`${org}:${phone}`);

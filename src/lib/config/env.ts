@@ -24,6 +24,9 @@ export const serverEnv = {
   upstashUrl: () => process.env.UPSTASH_REDIS_REST_URL || undefined,
   upstashToken: () => process.env.UPSTASH_REDIS_REST_TOKEN || undefined,
   cronSecret: () => process.env.CRON_SECRET || undefined,
+  // Edge fail-open worker (DESIGN_NOTES §6). Both must be set for numbers to get a VoiceFallbackUrl.
+  failOpenWorkerUrl: () => process.env.FAIL_OPEN_WORKER_URL || undefined,
+  failOpenSigningSecret: () => process.env.FALLBACK_SIGNING_SECRET || undefined,
   // 'twilio' (default): Twilio's Opt-Out Management answers STOP/START/HELP, so the app only
   // records state. 'app': Twilio's keyword handling is disabled and this app replies itself.
   smsKeywordReplies: (): 'twilio' | 'app' => (process.env.SMS_KEYWORD_REPLIES === 'app' ? 'app' : 'twilio'),

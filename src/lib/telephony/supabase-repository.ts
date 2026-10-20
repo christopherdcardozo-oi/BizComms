@@ -147,7 +147,7 @@ export class SupabaseCallRepository implements CallRepository {
         body: input.body,
         direction: 'outbound_api',
         status: input.status,
-        type: 'missed_call_auto_reply',
+        type: input.type ?? 'missed_call_auto_reply',
         error_code: input.errorCode ?? null,
         error_message: input.errorMessage ?? null,
       }),
@@ -232,6 +232,25 @@ export class SupabaseCallRepository implements CallRepository {
         ),
       'recordOptOut'
     );
+  }
+
+  async hasPriorContact(organizationId: string, phoneNumber: string): Promise<boolean> {
+    const [calls, texts] = await Promise.all([
+      this.db
+        .from('call_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
+        .eq('from_number', phoneNumber),
+      this.db
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
+        .eq('direction', 'inbound')
+        .eq('from_number', phoneNumber),
+    ]);
+    if (calls.error) throw new Error(`hasPriorContact calls: ${calls.error.message}`);
+    if (texts.error) throw new Error(`hasPriorContact texts: ${texts.error.message}`);
+    return (calls.count ?? 0) + (texts.count ?? 0) > 0;
   }
 
   async clearOptOut(organizationId: string, phoneNumber: string): Promise<void> {

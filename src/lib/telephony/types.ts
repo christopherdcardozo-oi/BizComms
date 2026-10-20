@@ -1,4 +1,4 @@
-import type { A2PStatus, CallOutcome, CallStatus, MessageStatus, OptOutSource } from '../../types/database.types';
+import type { A2PStatus, CallOutcome, CallStatus, MessageStatus, MessageType, OptOutSource } from '../../types/database.types';
 import type { ISmsProvider } from '../providers/sms/types';
 import type { ITelephonyProvider } from '../providers/telephony/types';
 import type { BusinessHours } from './business-hours';
@@ -51,6 +51,7 @@ export interface OutboundMessageRecord {
   status: MessageStatus;
   errorCode?: string;
   errorMessage?: string;
+  type?: MessageType; // defaults to 'missed_call_auto_reply'
 }
 
 export interface InboundMessageRecord {
@@ -79,6 +80,8 @@ export interface CallRepository {
   recordInboundMessage(input: InboundMessageRecord): Promise<'new' | 'duplicate'>;
   recordOptOut(organizationId: string, phoneNumber: string, source: OptOutSource): Promise<void>;
   clearOptOut(organizationId: string, phoneNumber: string): Promise<void>;
+  // True when this person has called or texted the business before (no cold outreach).
+  hasPriorContact(organizationId: string, phoneNumber: string): Promise<boolean>;
   // Applies a delivery receipt without regressing a terminal status; returns the message's
   // owning org and recipient, or null when the MessageSid is unknown.
   updateMessageStatus(

@@ -672,6 +672,63 @@ async function runTestSuite() {
       run: async (c) =>
         expectThrows(c, "SELECT public.claim_sms_rescue('CA_x', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')", '42501'),
     },
+    {
+      id: 37,
+      name: 'Owner cannot insert a twilio_config (numbers are provisioned server-side) (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "INSERT INTO public.twilio_configs (organization_id, twilio_phone_number, forward_to_number) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '+12025550777', '+12025550199')",
+          '42501'
+        ),
+    },
+    {
+      id: 38,
+      name: 'Owner cannot repoint twilio_phone_number to claim another number (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "UPDATE public.twilio_configs SET twilio_phone_number = '+12025550777' WHERE id = 'a1111111-1111-1111-1111-111111111111'",
+          '42501'
+        ),
+    },
+    {
+      id: 39,
+      name: 'Owner can update routing preferences on their own line',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) => {
+        const res = await c.query(
+          "UPDATE public.twilio_configs SET forward_to_number = '+13125550123', missed_call_sms_enabled = false WHERE id = 'a1111111-1111-1111-1111-111111111111' RETURNING forward_to_number"
+        );
+        const value = res.rows[0]?.forward_to_number;
+        return { pass: value === '+13125550123', received: `forward_to_number: ${value}`, expected: 'forward_to_number: +13125550123' };
+      },
+    },
+    {
+      id: 40,
+      name: 'Forwarding to a non-NANP (international) number is rejected (SQLSTATE 23514)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(
+          c,
+          "UPDATE public.twilio_configs SET forward_to_number = '+882135550123' WHERE id = 'a1111111-1111-1111-1111-111111111111'",
+          '23514'
+        ),
+    },
+    {
+      id: 41,
+      name: 'Owner cannot delete a twilio_config (release goes through the server) (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(c, "DELETE FROM public.twilio_configs WHERE id = 'a1111111-1111-1111-1111-111111111111'", '42501'),
+    },
   ];
 
   console.log(`=== RUNNING ${tests.length} ASSERTIONS (TRANSACTION ISOLATED & ROLLED BACK) ===\n`);
