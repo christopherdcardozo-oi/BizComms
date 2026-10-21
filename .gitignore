@@ -24,3 +24,6 @@ data/
 # Impeccable engine binary (re-downloaded by `npx impeccable install`); keep 17MB natives out of git
 .claude/skills/impeccable/scripts/bin/
 .impeccable/
+
+# Prospect lists (business contact data; keep out of the repo)
+sales/*.csv
