@@ -25,11 +25,12 @@ check each provider's current pricing.
 
 ## Before your first paying customer
 
-1. **Stripe (free until you charge):** activate your account. In Product catalog, create three
-   monthly prices ($29 / $89 / $129) and, if you charge one, a one-time $29 setup price. Put the IDs
-   in `STRIPE_PRICE_TEXT_BACK`, `STRIPE_PRICE_RECEPTIONIST`, `STRIPE_PRICE_COMPLETE` (and
-   `STRIPE_PRICE_SETUP_FEE`). In Settings → Billing → Customer portal, allow switching between
-   the three prices and canceling at period end.
+1. **Stripe (free until you charge):** test mode is set up (`npm run stripe:setup` created the
+   three plans and the customer portal). To go live: finish "Activate payments" in Stripe (needs
+   your live website and bank), save the live secret key with
+   `python3 scripts/set_secret_dialog.py STRIPE_SECRET_KEY --prefix sk_live_`, then run
+   `node scripts/stripe-setup.mjs --live`. For a setup fee, add a one-time price and put its ID in
+   `STRIPE_PRICE_SETUP_FEE`.
 2. **Domain ($, about $10–15 a year):** buy one, then point it at your host.
 3. **Hosting:** deploy the Next.js app. Vercel's free Hobby plan doesn't allow commercial use
    (Pro is about $20 a month). Set every variable from `.env.local` on the host, plus

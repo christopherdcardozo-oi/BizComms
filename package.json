@@ -16,6 +16,7 @@
     "simulate": "sucrase-node scripts/simulate.ts",
     "verify": "npm run typecheck && npm run test:unit && npm run test:rls && npm run simulate",
     "db:migrate": "node scripts/supabase-migrate.mjs",
+    "stripe:setup": "node scripts/stripe-setup.mjs",
     "test:e2e": "sucrase-node tests/e2e/module-a.e2e.ts --i-understand-this-writes-to-supabase && sucrase-node tests/e2e/module-b.e2e.ts --i-understand-this-writes-to-supabase && sucrase-node tests/e2e/module-d.e2e.ts --i-understand-this-writes-to-supabase"
   },
   "dependencies": {
