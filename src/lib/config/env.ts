@@ -9,6 +9,15 @@ function flag(name: string, defaultValue = false): boolean {
 
 export const isProduction = () => process.env.NODE_ENV === 'production';
 
+// The site's public origin. NEXT_PUBLIC_APP_URL wins; on Vercel without it, fall back to the
+// project's production address (a system variable Vercel sets on every build and request).
+export function publicAppUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL;
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const url = explicit || (vercel ? `https://${vercel}` : 'http://localhost:3000');
+  return url.replace(/\/+$/, '');
+}
+
 export const serverEnv = {
   killSwitch: () => flag('EMERGENCY_KILL_SWITCH'),
   useMockTelephony: () => flag('USE_MOCK_TELEPHONY'),
@@ -29,7 +38,7 @@ export const serverEnv = {
     const days = Number.parseInt(process.env.STRIPE_TRIAL_DAYS ?? '', 10);
     return Number.isFinite(days) && days > 0 ? days : undefined;
   },
-  appUrl: () => (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/+$/, ''),
+  appUrl: publicAppUrl,
   twilioAccountSid: () => process.env.TWILIO_ACCOUNT_SID ?? '',
   twilioAuthToken: () => process.env.TWILIO_AUTH_TOKEN ?? '',
   twilioMessagingServiceSid: () => process.env.TWILIO_MESSAGING_SERVICE_SID || undefined,

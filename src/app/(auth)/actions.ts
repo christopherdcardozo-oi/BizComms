@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { publicAppUrl } from '@/lib/config/env';
 import { launch } from '@/lib/site';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -51,7 +52,7 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
   if (!parsed.success) return { error: parsed.error.issues[0].message, email };
 
   const supabase = await createSupabaseServerClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const appUrl = publicAppUrl();
   const { data, error } = await supabase.auth.signUp({
     ...parsed.data,
     options: { emailRedirectTo: `${appUrl}/auth/confirm?next=/onboarding` },
