@@ -5,7 +5,7 @@ import { InboxDemo, ReceptionistDemo, ReviewDemo, TextBackDemo } from '@/compone
 import { Pricing } from '@/components/marketing/pricing';
 import { WhyUs } from '@/components/marketing/why-us';
 import { Button } from '@/components/ui/button';
-import { pricing, siteConfig } from '@/lib/site';
+import { pricing, primaryCta, siteConfig } from '@/lib/site';
 
 export const metadata = {
   title: `${siteConfig.name} · Never lose a job to a missed call`,
@@ -80,7 +80,7 @@ export default function LandingPage() {
           </p>
           <div style={i(2)} className="flex flex-wrap gap-3">
             <Button asChild size="lg">
-              <Link href="/signup">Get started</Link>
+              <Link href={primaryCta.href}>{primaryCta.label}</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/demo">See a live demo</Link>
@@ -158,7 +158,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-20 md:flex-row md:items-center md:justify-between">
           <h2 className="text-title max-w-xl">Stop sending jobs to voicemail.</h2>
           <Button asChild size="lg">
-            <Link href="/signup">Get started</Link>
+            <Link href={primaryCta.href}>{primaryCta.label}</Link>
           </Button>
         </div>
       </section>

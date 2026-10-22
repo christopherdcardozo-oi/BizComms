@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { launch } from '@/lib/site';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export interface AuthFormState {
@@ -45,6 +46,7 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
 
 export async function signUp(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const email = String(formData.get('email') ?? '');
+  if (!launch.signupsOpen) return { error: 'Signups open soon. Book a demo to get set up personally.', email };
   const parsed = credentials.safeParse({ email, password: formData.get('password') });
   if (!parsed.success) return { error: parsed.error.issues[0].message, email };
 

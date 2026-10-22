@@ -9,6 +9,15 @@ export const siteConfig = {
   legalEffectiveDate: 'October 20, 2026',
 };
 
+// Launch mode. Until texting and billing are live for real customers, the public site books demos
+// instead of taking signups. Set NEXT_PUBLIC_SIGNUPS_OPEN="true" to open self-serve signup.
+export const launch = {
+  signupsOpen: process.env.NEXT_PUBLIC_SIGNUPS_OPEN === 'true',
+  bookingUrl: process.env.NEXT_PUBLIC_BOOKING_URL || '',
+};
+
+export const primaryCta = launch.signupsOpen ? { href: '/signup', label: 'Get started' } : { href: '/book', label: 'Book a demo' };
+
 // Public pricing shown on the landing page. Edit freely; nothing else reads these yet.
 // NOTE: checkout currently sells one Stripe price (STRIPE_PRICE_STARTER) and every subscriber gets
 // every feature. Wire one Stripe price per plan + per-plan feature gates before advertising tiers.

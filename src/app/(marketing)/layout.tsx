@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { siteConfig } from '@/lib/site';
+import { launch, primaryCta, siteConfig } from '@/lib/site';
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -37,11 +37,13 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             </a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/login">Sign in</Link>
-            </Button>
+            {launch.signupsOpen ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/login">Sign in</Link>
+              </Button>
+            ) : null}
             <Button asChild size="sm">
-              <Link href="/signup">Get started</Link>
+              <Link href={primaryCta.href}>{primaryCta.label}</Link>
             </Button>
           </div>
         </div>

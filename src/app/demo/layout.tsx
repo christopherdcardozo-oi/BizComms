@@ -3,7 +3,7 @@ import { NavLink } from '@/components/dashboard/nav-link';
 import { Button } from '@/components/ui/button';
 import { DEMO_BUSINESS } from '@/lib/demo/data';
 import { formatNanp } from '@/lib/numbers/phone';
-import { siteConfig } from '@/lib/site';
+import { primaryCta, siteConfig } from '@/lib/site';
 
 export const metadata = {
   title: `Live demo · ${siteConfig.name}`,
@@ -25,7 +25,7 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
               <Link href="/">Back to site</Link>
             </Button>
             <Button asChild size="sm">
-              <Link href="/signup">Get started</Link>
+              <Link href={primaryCta.href}>{primaryCta.label}</Link>
             </Button>
           </div>
         </div>
