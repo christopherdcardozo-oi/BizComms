@@ -21,6 +21,11 @@ export const primaryCta = launch.signupsOpen ? { href: '/signup', label: 'Get st
 // Public pricing shown on the landing page. Edit freely; nothing else reads these yet.
 // NOTE: checkout currently sells one Stripe price (STRIPE_PRICE_STARTER) and every subscriber gets
 // every feature. Wire one Stripe price per plan + per-plan feature gates before advertising tiers.
+// Fair-use allowance for calls forwarded to the owner's phone on Text-Back. Each forwarded minute is
+// billed twice by the carrier (in + out), so heavy callers belong on a bigger plan. Calls are never
+// blocked or stopped because of it (Terms §11).
+export const TEXT_BACK_FORWARDED_MINUTES = 500;
+
 export interface PricingPlan {
   id: 'text-back' | 'receptionist' | 'complete';
   name: string;
@@ -42,7 +47,14 @@ export const pricing = {
       name: 'Text-Back',
       monthly: 29,
       blurb: 'Never lose a missed caller again.',
-      features: ['Local business number', 'Instant text-back to missed callers', 'Shared text inbox', 'Call log', 'Opt-out handling built in'],
+      features: [
+        'Local business number',
+        'Instant text-back to missed callers',
+        'Shared text inbox',
+        'Call log',
+        'Opt-out handling built in',
+        `Up to ${TEXT_BACK_FORWARDED_MINUTES} forwarded call minutes/month`,
+      ],
     },
     {
       id: 'receptionist',

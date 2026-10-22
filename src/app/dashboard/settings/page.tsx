@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { canManage, requireOrganization } from '@/lib/auth/session';
-import { PLAN_NAMES, planForPrice } from '@/lib/billing/plans';
+import { fairUseStatus, FORWARDED_MINUTES_FAIR_USE, PLAN_NAMES, planForPrice } from '@/lib/billing/plans';
 import { parseBusinessProfile } from '@/lib/business-profile';
 import { describeSubscription } from '@/lib/billing/status';
-import { getGoogleConnection, getOrganizationDetails, getPrimaryLine } from '@/lib/dashboard/queries';
+import { getForwardedMinutesThisMonth, getGoogleConnection, getOrganizationDetails, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
 import { BillingCard } from './billing-card';
 import { GoogleCard } from './google-card';
@@ -15,12 +15,16 @@ export const metadata = { title: 'Settings · BizComms' };
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const session = await requireOrganization();
+  const plan = planForPrice(session.stripePriceId);
+  const fairUseLimit = FORWARDED_MINUTES_FAIR_USE[plan];
   const [line, org, google, { google: googleResult }] = await Promise.all([
     getPrimaryLine(session.supabase),
     getOrganizationDetails(session.supabase, session.organizationId),
     getGoogleConnection(session.supabase),
     searchParams,
   ]);
+  const forwardedUsed = fairUseLimit ? await getForwardedMinutesThisMonth(session.supabase) : 0;
+  const forwarded = fairUseLimit ? { used: forwardedUsed, limit: fairUseLimit, status: fairUseStatus(forwardedUsed, fairUseLimit) } : undefined;
 
   return (
     <>
@@ -63,7 +67,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <GoogleCard connection={google} canEdit={canManage(session.role)} result={googleResult} />
       {session.stripeCustomerId ? (
         <BillingCard
-          planName={PLAN_NAMES[planForPrice(session.stripePriceId)]}
+          planName={PLAN_NAMES[plan]}
+          forwarded={forwarded}
           statusLabel={describeSubscription(session.subscriptionStatus)}
           healthy={session.subscriptionStatus === 'active' || session.subscriptionStatus === 'trialing'}
           canEdit={canManage(session.role)}

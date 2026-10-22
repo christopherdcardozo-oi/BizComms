@@ -64,3 +64,21 @@ test('saving the business profile updates organizations.business_profile', async
   );
   expect(org.business_profile).toMatchObject({ trade: 'plumbing', serviceArea: 'Ames, Nevada and Boone' });
 });
+
+test('Text-Back shows forwarded minutes against the fair-use allowance, and warns near the limit', async ({ page, business, db }) => {
+  // A billing customer on no recognized plan price resolves to Text-Back; 450 answered minutes = 90%.
+  await db.from('organizations').update({ stripe_customer_id: 'cus_playwright' }).eq('id', business.orgId);
+  await db.from('call_logs').insert({
+    organization_id: business.orgId,
+    call_sid: `CApwfairuse${Date.now()}`,
+    from_number: '+15551230099',
+    to_number: business.businessNumber,
+    status: 'completed',
+    outcome: 'answered_by_business',
+    duration_seconds: 450 * 60,
+  });
+
+  await page.goto('/dashboard/settings');
+  await expect(page.getByText('Forwarded call minutes this month:')).toContainText('450 of 500');
+  await expect(page.getByText(/close to your plan's fair-use allowance\. Calls keep forwarding as normal/)).toBeVisible();
+});

@@ -1,5 +1,6 @@
 // Creates the three plan products and monthly prices in Stripe, configures the default customer
-// portal (switch plans, cancel at period end, update card, invoices), and writes the price IDs
+// portal (switch plans, cancel at period end, update card, invoices), turns on ACH bank payments,
+// and writes the price IDs
 // into .env.local. Safe to re-run: products and prices are found by lookup key, not duplicated.
 //
 // Usage: node scripts/stripe-setup.mjs          (test mode keys only)
@@ -53,6 +54,17 @@ async function findOrCreatePrice(stripe, plan) {
   return { price, productId: product.id, created: true };
 }
 
+// Bank debit (ACH) costs about a third of card fees. Checkout only offers it when it's on in the
+// account's default payment method configuration, so switch it on there.
+async function enableAch(stripe) {
+  const configs = await stripe.paymentMethodConfigurations.list({ limit: 20 });
+  const config = configs.data.find((c) => c.is_default && !c.application) ?? configs.data.find((c) => c.is_default);
+  if (!config) return 'no default configuration found; turn on ACH Direct Debit in Settings → Payment methods';
+  if (config.us_bank_account?.display_preference?.value === 'on') return 'already on';
+  await stripe.paymentMethodConfigurations.update(config.id, { us_bank_account: { display_preference: { preference: 'on' } } });
+  return 'turned on';
+}
+
 async function configurePortal(stripe, results) {
   const features = {
     customer_update: { enabled: true, allowed_updates: ['email', 'address'] },
@@ -92,6 +104,7 @@ async function main() {
     results.push(r);
   }
   console.log(`  customer portal ${await configurePortal(stripe, results)} (switch plans, cancel at period end, card, invoices)`);
+  console.log(`  ACH bank payments: ${await enableAch(stripe)}`);
   console.log('Done. Price IDs saved to .env.local.');
 }
 

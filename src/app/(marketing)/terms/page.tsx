@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { LegalPage } from '@/components/marketing/legal-page';
-import { pricing, siteConfig } from '@/lib/site';
+import { pricing, siteConfig, TEXT_BACK_FORWARDED_MINUTES } from '@/lib/site';
 
 export const metadata = { title: `Terms of Service · ${siteConfig.name}` };
 
@@ -244,6 +244,11 @@ export default function TermsPage() {
           <li>
             Plans include usage allowances, such as AI receptionist minutes. If you go over, we may pause the affected feature until the next billing
             period or offer additional usage at prices shown in the app, and we will not charge for overage you did not agree to.
+          </li>
+          <li>
+            Plans that list forwarded call minutes (for example, up to {TEXT_BACK_FORWARDED_MINUTES} a month on Text-Back) include them as a fair-use
+            allowance. We never block, pause, or stop forwarding calls because of it. If you regularly go over, we may contact you about moving to a
+            plan that fits your call volume, and we will not charge for extra minutes unless you agree.
           </li>
         </ul>
         <h3>Refunds, price changes, and taxes</h3>

@@ -251,3 +251,32 @@ test('provisioning creates the assistant + SIP number once, then updates in plac
   assert.deepEqual(provider.upserts[1].existing, { assistantId: 'vapi_ast_mock_org-acme', phoneNumberId: 'vapi_pn_mock_org-acme' });
   assert.deepEqual(saved[0], saved[1], 'same ids, no duplicate resources');
 });
+
+test('Vapi assistant is cost-tuned: 5-minute cap, silence hang-up, auto end-call on the closing line', async () => {
+  const { VapiProvider } = await import('../src/lib/providers/voice-ai/vapi');
+  const { RECEPTIONIST_CLOSING, receptionistPrompt } = await import('../src/lib/voice/receptionist');
+  const sent: Array<{ url: string; body: Record<string, any> }> = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (url: string, init: RequestInit) => {
+    sent.push({ url, body: JSON.parse(String(init.body ?? '{}')) });
+    return new Response(JSON.stringify({ id: `id_${sent.length}` }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    await new VapiProvider({ apiKey: 'test' }).upsertReceptionist({
+      organizationId: 'org-acme', businessName: 'Acme', systemPrompt: receptionistPrompt('Acme', null),
+      firstMessage: 'Hi', sipUri: 'sip:bc-x@sip.vapi.ai', webhookUrl: 'https://app.test/api/vapi/webhook',
+    });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const a = sent[0].body;
+  assert.equal(a.maxDurationSeconds, 300);
+  assert.equal(a.silenceTimeoutSeconds, 20);
+  assert.equal(a.endCallFunctionEnabled, true);
+  assert.deepEqual(a.endCallPhrases, [RECEPTIONIST_CLOSING]);
+  assert.equal(a.transcriber.numerals, true);
+  assert.equal(a.voice.provider, 'deepgram');
+  assert.equal(a.backgroundSound, 'off');
+  // The prompt tells the AI to say the exact phrase that triggers the hang-up.
+  assert.ok(a.model.messages[0].content.includes(RECEPTIONIST_CLOSING));
+});

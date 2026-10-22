@@ -55,8 +55,8 @@ export function PlanStep({ trialDays, setupFee, notice }: { trialDays?: number; 
         {pending ? 'Opening secure checkout…' : trialDays ? 'Start free trial' : `Subscribe to ${plan.name}`}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        By subscribing you agree to the <a href="/terms" className="underline underline-offset-4">Terms</a>. Payments are processed securely by
-        Stripe.
+        By subscribing you agree to the <a href="/terms" className="underline underline-offset-4">Terms</a>. Pay by card or bank account;
+        payments are processed securely by Stripe.
       </p>
     </form>
   );

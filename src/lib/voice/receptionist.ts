@@ -9,6 +9,10 @@ export function receptionistGreeting(businessName: string): string {
 }
 
 // businessContext: facts from the business profile (services, area, hours…), one per line.
+// Spoken last on every call; Vapi hangs up as soon as the assistant says it (endCallPhrases),
+// so calls end the moment the job is captured instead of idling until the caller hangs up.
+export const RECEPTIONIST_CLOSING = 'Thanks for calling, someone will be in touch soon. Goodbye.';
+
 export function receptionistPrompt(businessName: string, ownerInstructions: string | null, businessContext: string[] = []): string {
   return [
     `You are the phone receptionist for ${businessName}, a local service business.`,
@@ -18,7 +22,8 @@ export function receptionistPrompt(businessName: string, ownerInstructions: stri
     'Tell the caller someone from the business will follow up soon.',
     'Never quote prices, promise appointment times, or give technical, medical, or legal advice.',
     'If the caller describes an emergency involving danger to people (for example a gas smell, smoke, or sparking wires), tell them to get somewhere safe and call 911.',
-    'Keep responses short; this is a phone call.',
+    'Keep responses short; this is a phone call. Ask one question at a time.',
+    `After you read the details back once and the caller confirms, say exactly: "${RECEPTIONIST_CLOSING}" and nothing else.`,
   ].join('\n');
 }
 

@@ -2,7 +2,7 @@
 // Stripe price on the subscription (organizations.stripe_price_id, kept current by the webhook),
 // so changing plans in the Stripe portal changes features with no extra bookkeeping.
 import { serverEnv } from '../config/env';
-import type { PricingPlan } from '../site';
+import { TEXT_BACK_FORWARDED_MINUTES, type PricingPlan } from '../site';
 
 export type PlanId = PricingPlan['id'];
 
@@ -59,4 +59,13 @@ export function featuresOf(plan: PlanId): PlanFeatures {
 // The Stripe price to sell for a plan. In single-price mode every plan checks out on that price.
 export function checkoutPriceFor(plan: PlanId, prices: PlanPrices = serverEnv.stripePlanPrices()): string | undefined {
   return hasPlanPrices(prices) ? prices[plan] : serverEnv.stripePriceId();
+}
+
+// Fair-use allowance for minutes forwarded to the owner's phone, by plan (none = no allowance).
+// Soft limit only: shown in Settings, never enforced by blocking or dropping calls.
+export const FORWARDED_MINUTES_FAIR_USE: Partial<Record<PlanId, number>> = { 'text-back': TEXT_BACK_FORWARDED_MINUTES };
+
+export function fairUseStatus(usedMinutes: number, limit: number): 'ok' | 'near' | 'over' {
+  if (usedMinutes > limit) return 'over';
+  return usedMinutes >= limit * 0.8 ? 'near' : 'ok';
 }

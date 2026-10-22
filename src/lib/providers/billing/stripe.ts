@@ -41,6 +41,11 @@ export class StripeBillingProvider implements IBillingProvider {
   async createCheckoutSession(params: CheckoutParams): Promise<{ sessionId: string; url: string }> {
     const session = await this.stripe.checkout.sessions.create({
       mode: 'subscription',
+      // Bank debit (ACH) costs about a third of card fees: 0.8% capped at $5 vs 2.9% + 30¢.
+      // A filter on the account's enabled methods: ACH must also be on in the Stripe Dashboard
+      // (scripts/stripe-setup.mjs turns it on).
+      allowed_payment_method_types: ['card', 'link', 'us_bank_account'],
+      payment_method_options: { us_bank_account: { verification_method: 'automatic' } },
       line_items: [
         { price: params.priceId, quantity: 1 },
         ...(params.setupFeePriceId ? [{ price: params.setupFeePriceId, quantity: 1 }] : []),

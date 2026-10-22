@@ -69,3 +69,14 @@ test('a Text-Back customer with the AI switched on still rings the owner after h
     }
   }
 });
+
+test('Text-Back has a 500-minute forwarding fair-use allowance; status warns at 80% and over', async () => {
+  const { FORWARDED_MINUTES_FAIR_USE, fairUseStatus } = await import('../src/lib/billing/plans');
+  assert.equal(FORWARDED_MINUTES_FAIR_USE['text-back'], 500);
+  assert.equal(FORWARDED_MINUTES_FAIR_USE.receptionist, undefined);
+  assert.equal(fairUseStatus(0, 500), 'ok');
+  assert.equal(fairUseStatus(399, 500), 'ok');
+  assert.equal(fairUseStatus(400, 500), 'near');
+  assert.equal(fairUseStatus(500, 500), 'near');
+  assert.equal(fairUseStatus(501, 500), 'over');
+});

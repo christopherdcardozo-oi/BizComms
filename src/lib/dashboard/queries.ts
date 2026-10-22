@@ -185,3 +185,17 @@ export async function listReviews(db: SupabaseClient, limit = 100): Promise<Revi
   const needsAttention = (r: ReviewRow) => r.reply_status === 'manual_review' || r.reply_status === 'failed';
   return [...rows.filter(needsAttention), ...rows.filter((r) => !needsAttention(r))];
 }
+
+// Talk time on calls the owner answered on their own phone this calendar month (UTC), in whole
+// minutes. Used for the Text-Back fair-use allowance; RLS limits it to the caller's organization.
+export async function getForwardedMinutesThisMonth(db: SupabaseClient, now: Date = new Date()): Promise<number> {
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const { data, error } = await db
+    .from('call_logs')
+    .select('duration_seconds')
+    .eq('outcome', 'answered_by_business')
+    .gte('started_at', monthStart);
+  if (error) fail('getForwardedMinutesThisMonth', error);
+  const seconds = ((data ?? []) as Array<{ duration_seconds: number | null }>).reduce((sum, r) => sum + (r.duration_seconds ?? 0), 0);
+  return Math.ceil(seconds / 60);
+}

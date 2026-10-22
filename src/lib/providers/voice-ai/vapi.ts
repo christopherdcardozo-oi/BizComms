@@ -1,3 +1,4 @@
+import { RECEPTIONIST_CLOSING } from '../../voice/receptionist';
 import type { IVoiceAiProvider, ProvisionedReceptionist, ReceptionistConfig } from './types';
 
 const VAPI_API = 'https://api.vapi.ai';
@@ -30,13 +31,27 @@ export class VapiProvider implements IVoiceAiProvider {
     return {
       name: `${config.businessName} receptionist`.slice(0, 40),
       firstMessage: config.firstMessage,
-      // Confirm against Vapi's model schema in the first test-mode call.
+      firstMessageMode: 'assistant-speaks-first',
       model: {
         provider: 'openai',
         model: 'gpt-4o-mini',
         messages: [{ role: 'system', content: config.systemPrompt }],
       },
-      maxDurationSeconds: 600, // cost ceiling per call
+      // Cost tuning (docs/cost-research-2026-10.md). Nova-3 with numerals writes spoken digits as
+      // numbers, which matters for callback numbers and addresses. Aura-2 costs roughly half of
+      // the default voice at similar latency.
+      transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en', numerals: true, smartFormat: true },
+      voice: { provider: 'deepgram', model: 'aura-2', voiceId: 'thalia' },
+      // Message-taking calls run 1–3 minutes. These stop dead air and runaway calls from billing.
+      maxDurationSeconds: 300,
+      silenceTimeoutSeconds: 20,
+      messagePlan: { idleMessages: ['Are you still there?'], idleMessageMaxSpokenCount: 2, idleTimeoutSeconds: 8 },
+      endCallFunctionEnabled: true,
+      endCallPhrases: [RECEPTIONIST_CLOSING],
+      // Job sites and trucks are noisy: filter background speech, and don't add fake office noise.
+      backgroundSound: 'off',
+      backgroundSpeechDenoisingPlan: { smartDenoisingPlan: { enabled: true } },
+      stopSpeakingPlan: { numWords: 2 },
       serverMessages: ['end-of-call-report', 'status-update'],
       server: {
         url: config.webhookUrl,
