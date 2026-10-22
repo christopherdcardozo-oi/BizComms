@@ -5,6 +5,7 @@ export const MAX_REPLY_CHARS = 1000; // Google allows ~4096 bytes; short replies
 export function reviewReplyPrompt(p: GenerateReplyParams): { system: string; user: string } {
   const system = [
     `You write public replies to Google reviews on behalf of ${p.businessName}, a local business.`,
+    ...(p.businessContext ?? []),
     `Tone: ${p.tone?.trim() || 'warm, professional, and appreciative'}.`,
     p.customInstructions?.trim() ? `Owner instructions: ${p.customInstructions.trim()}` : '',
     'Rules:',

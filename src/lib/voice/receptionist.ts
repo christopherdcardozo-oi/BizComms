@@ -1,4 +1,6 @@
+import { parseBusinessProfile, receptionistContext } from '../business-profile';
 import type { IVoiceAiProvider } from '../providers/voice-ai/types';
+import type { BusinessHours } from '../telephony/business-hours';
 import { vapiSipUri } from './sip';
 
 export function receptionistGreeting(businessName: string): string {
@@ -6,14 +8,16 @@ export function receptionistGreeting(businessName: string): string {
   return `Thanks for calling ${businessName}. You've reached our automated assistant, and this call may be recorded. How can I help you today?`;
 }
 
-export function receptionistPrompt(businessName: string, ownerInstructions: string | null): string {
+// businessContext: facts from the business profile (services, area, hours…), one per line.
+export function receptionistPrompt(businessName: string, ownerInstructions: string | null, businessContext: string[] = []): string {
   return [
     `You are the phone receptionist for ${businessName}, a local service business.`,
+    ...businessContext,
     ownerInstructions?.trim() || 'Be warm, courteous, and efficient.',
     "Collect the caller's name, the best callback number, and what they need help with, then confirm the details back.",
     'Tell the caller someone from the business will follow up soon.',
     'Never quote prices, promise appointment times, or give technical, medical, or legal advice.',
-    'If the caller describes an emergency involving danger to people, tell them to hang up and call 911.',
+    'If the caller describes an emergency involving danger to people (for example a gas smell, smoke, or sparking wires), tell them to get somewhere safe and call 911.',
     'Keep responses short; this is a phone call.',
   ].join('\n');
 }
@@ -24,6 +28,9 @@ export interface ReceptionistStore {
     aiReceptionistPrompt: string | null;
     vapiAssistantId: string | null;
     vapiPhoneNumberId: string | null;
+    businessProfile?: unknown;
+    businessHours?: BusinessHours | null;
+    timezone?: string;
   } | null>;
   saveVapiIds(organizationId: string, ids: { assistantId: string; phoneNumberId: string }): Promise<void>;
 }
@@ -43,7 +50,11 @@ export async function provisionReceptionist(
       {
         organizationId,
         businessName: org.name,
-        systemPrompt: receptionistPrompt(org.name, org.aiReceptionistPrompt),
+        systemPrompt: receptionistPrompt(
+          org.name,
+          org.aiReceptionistPrompt,
+          receptionistContext(parseBusinessProfile(org.businessProfile), org.businessHours, org.timezone)
+        ),
         firstMessage: receptionistGreeting(org.name),
         sipUri: vapiSipUri(organizationId, deps.sipHost),
         webhookUrl: deps.webhookUrl,

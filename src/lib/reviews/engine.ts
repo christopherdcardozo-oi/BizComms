@@ -1,4 +1,5 @@
 import { planFeatures } from '../billing/plans';
+import { EMPTY_PROFILE, reviewContext, type BusinessProfile } from '../business-profile';
 import { billingAllowsService } from '../billing/status';
 import { decryptToken, encryptToken } from '../crypto/token-cipher';
 import type { ILlmProvider } from '../providers/llm/types';
@@ -9,6 +10,7 @@ export interface ReviewConfig {
   businessName: string;
   subscriptionStatus: string | null;
   stripePriceId?: string | null;
+  businessProfile?: BusinessProfile;
   accountId: string | null;
   locationId: string | null;
   autoReplyEnabled: boolean;
@@ -145,6 +147,7 @@ export async function syncOrganizationReviews(organizationId: string, deps: Revi
         reviewComment: review.comment ?? undefined,
         tone: config.replyTone,
         customInstructions: config.customInstructions,
+        businessContext: reviewContext(config.businessProfile ?? EMPTY_PROFILE),
       });
     } catch (err) {
       deps.logger.error('AI reply generation failed', { organizationId, reviewId: review.id, error: String(err) });

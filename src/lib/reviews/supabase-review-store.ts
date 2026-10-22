@@ -1,5 +1,6 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { parseBusinessProfile } from '../business-profile';
 import type { ClaimedReview, NewReviewRow, ReviewConfig, ReviewPatch, ReviewStore, StoredTokens } from './engine';
 
 function must<T>(result: { data: T; error: { message: string } | null }, context: string): T {
@@ -16,7 +17,7 @@ export class SupabaseReviewStore implements ReviewStore {
     const row = must(
       await this.admin
         .from('google_configs')
-        .select('google_account_id, google_location_id, auto_reply_enabled, auto_reply_min_stars, auto_publish_min_stars, reply_tone, custom_reply_instructions, organizations!inner(name, subscription_status, stripe_price_id)')
+        .select('google_account_id, google_location_id, auto_reply_enabled, auto_reply_min_stars, auto_publish_min_stars, reply_tone, custom_reply_instructions, organizations!inner(name, subscription_status, stripe_price_id, business_profile)')
         .eq('organization_id', organizationId)
         .maybeSingle(),
       'getConfig'
@@ -28,7 +29,7 @@ export class SupabaseReviewStore implements ReviewStore {
       auto_publish_min_stars: number;
       reply_tone: string;
       custom_reply_instructions: string | null;
-      organizations: { name: string; subscription_status: string | null; stripe_price_id: string | null };
+      organizations: { name: string; subscription_status: string | null; stripe_price_id: string | null; business_profile: unknown };
     } | null;
     if (!row) return null;
     return {
@@ -36,6 +37,7 @@ export class SupabaseReviewStore implements ReviewStore {
       businessName: row.organizations.name,
       subscriptionStatus: row.organizations.subscription_status,
       stripePriceId: row.organizations.stripe_price_id,
+      businessProfile: parseBusinessProfile(row.organizations.business_profile),
       accountId: row.google_account_id,
       locationId: row.google_location_id,
       autoReplyEnabled: row.auto_reply_enabled,

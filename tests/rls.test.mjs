@@ -941,6 +941,39 @@ async function runTestSuite() {
       run: async (c) =>
         expectThrows(c, "SELECT * FROM public.claim_reviews_for_reply('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10)", '42501'),
     },
+    {
+      id: 56,
+      name: 'Owner can save their business profile for the AI',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) => {
+        const res = await c.query(
+          `UPDATE public.organizations SET business_profile = '{"trade":"plumbing","serviceArea":"Ames"}'::jsonb WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' RETURNING business_profile->>'trade' AS trade`
+        );
+        const trade = res.rows[0]?.trade;
+        return { pass: trade === 'plumbing', received: `trade: ${trade}`, expected: 'trade: plumbing' };
+      },
+    },
+    {
+      id: 57,
+      name: 'Business profile must be a small JSON object (SQLSTATE 23514)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(c, "UPDATE public.organizations SET business_profile = '[1,2]'::jsonb WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'", '23514'),
+    },
+    {
+      id: 58,
+      name: "Owner cannot change another organization's business profile",
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) => {
+        const res = await c.query(
+          `UPDATE public.organizations SET business_profile = '{"trade":"roofing"}'::jsonb WHERE id <> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' RETURNING id`
+        );
+        return { pass: res.rowCount === 0, received: `rows updated: ${res.rowCount}`, expected: 'rows updated: 0' };
+      },
+    },
   ];
 
   console.log(`=== RUNNING ${tests.length} ASSERTIONS (TRANSACTION ISOLATED & ROLLED BACK) ===\n`);

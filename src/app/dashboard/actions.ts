@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { canManage, requireOrganization } from '@/lib/auth/session';
 import { planFeatures } from '@/lib/billing/plans';
+import { PROFILE_LIMITS, TRADE_IDS } from '@/lib/business-profile';
 import { billingAllowsService } from '@/lib/billing/status';
 import { getVoiceAiProvider } from '@/lib/providers/voice-ai';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
@@ -199,6 +200,14 @@ const profileSchema = z.object({
   timezone: z.enum(US_TIMEZONES),
   instructions: z.string().trim().max(1000, 'Keep instructions under 1,000 characters.'),
   hours: z.record(z.enum(WEEK), z.object({ open: hhmm, close: hhmm, closed: z.boolean() })),
+  profile: z.object({
+    trade: z.union([z.enum(TRADE_IDS), z.literal('')]),
+    services: z.string().trim().max(PROFILE_LIMITS.services, `Keep services under ${PROFILE_LIMITS.services} characters.`),
+    serviceArea: z.string().trim().max(PROFILE_LIMITS.serviceArea, `Keep the service area under ${PROFILE_LIMITS.serviceArea} characters.`),
+    emergencies: z.string().trim().max(PROFILE_LIMITS.emergencies, `Keep urgent situations under ${PROFILE_LIMITS.emergencies} characters.`),
+    askCallers: z.string().trim().max(PROFILE_LIMITS.askCallers, `Keep caller questions under ${PROFILE_LIMITS.askCallers} characters.`),
+    reviewSignOff: z.string().trim().max(PROFILE_LIMITS.reviewSignOff, `Keep the sign-off under ${PROFILE_LIMITS.reviewSignOff} characters.`),
+  }),
 });
 
 export async function updateBusinessProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
@@ -208,6 +217,14 @@ export async function updateBusinessProfile(_prev: ProfileState, formData: FormD
   const parsed = profileSchema.safeParse({
     timezone: formData.get('timezone'),
     instructions: String(formData.get('instructions') ?? ''),
+    profile: {
+      trade: String(formData.get('trade') ?? ''),
+      services: String(formData.get('services') ?? ''),
+      serviceArea: String(formData.get('serviceArea') ?? ''),
+      emergencies: String(formData.get('emergencies') ?? ''),
+      askCallers: String(formData.get('askCallers') ?? ''),
+      reviewSignOff: String(formData.get('reviewSignOff') ?? ''),
+    },
     hours: Object.fromEntries(
       WEEK.map((day) => [
         day,
@@ -228,6 +245,7 @@ export async function updateBusinessProfile(_prev: ProfileState, formData: FormD
       timezone: parsed.data.timezone,
       business_hours: parsed.data.hours,
       ai_receptionist_prompt: parsed.data.instructions || null,
+      business_profile: parsed.data.profile,
     })
     .eq('id', session.organizationId);
   if (error) return { error: 'Could not save. Please try again.' };

@@ -50,7 +50,7 @@ export async function getPrimaryLine(db: SupabaseClient): Promise<PrimaryLine | 
 export async function getOrganizationDetails(db: SupabaseClient, organizationId: string) {
   const { data, error } = await db
     .from('organizations')
-    .select('name, timezone, business_hours, ai_receptionist_prompt, vapi_phone_number_id')
+    .select('name, timezone, business_hours, ai_receptionist_prompt, vapi_phone_number_id, business_profile')
     .eq('id', organizationId)
     .single();
   if (error) fail('getOrganizationDetails', error);
@@ -60,6 +60,7 @@ export async function getOrganizationDetails(db: SupabaseClient, organizationId:
     business_hours: BusinessHours | null;
     ai_receptionist_prompt: string | null;
     vapi_phone_number_id: string | null;
+    business_profile: unknown;
   };
 }
 

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { canManage, requireOrganization } from '@/lib/auth/session';
 import { PLAN_NAMES, planForPrice } from '@/lib/billing/plans';
+import { parseBusinessProfile } from '@/lib/business-profile';
 import { describeSubscription } from '@/lib/billing/status';
 import { getGoogleConnection, getOrganizationDetails, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
@@ -55,6 +56,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         timezone={org.timezone}
         hours={org.business_hours}
         instructions={org.ai_receptionist_prompt ?? ''}
+        profile={parseBusinessProfile(org.business_profile)}
         aiProvisioned={!!org.vapi_phone_number_id}
         canEdit={canManage(session.role)}
       />

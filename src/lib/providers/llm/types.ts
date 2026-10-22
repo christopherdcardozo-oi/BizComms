@@ -5,6 +5,7 @@ export interface GenerateReplyParams {
   reviewComment?: string;
   tone?: string; // free text from google_configs.reply_tone
   customInstructions?: string | null;
+  businessContext?: string[]; // facts from the business profile (business-profile.ts reviewContext)
 }
 
 export interface GenerateReplyResult {
