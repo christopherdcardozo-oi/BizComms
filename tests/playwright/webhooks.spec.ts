@@ -91,3 +91,27 @@ test.describe('Twilio webhooks', () => {
     expect(texts).toHaveLength(0);
   });
 });
+
+test.describe('Owner texting command center', () => {
+  test('a customer text alerts the owner; the owner replies "won 650" and the job is logged', async ({ request, db, business }) => {
+    const customer = '+15551230004';
+    await postTwilio(request, '/api/sms/webhook', { MessageSid: `SMpwc${Date.now()}`, From: customer, To: business.businessNumber, Body: 'Need a water heater quote' });
+
+    const alert = await eventually(
+      async () => (await db.from('messages').select('*').eq('organization_id', business.orgId).eq('to_number', business.ownerCell).eq('type', 'system_alert').like('body', '%(555) 123-0004%').maybeSingle()).data
+    );
+    expect(alert.body).toContain('New text from');
+    expect(alert.body).toContain('Reply 1 to call them');
+    expect(String(alert.message_sid)).toMatch(/^SM_mock_/);
+
+    const reply = await postTwilio(request, '/api/sms/webhook', { MessageSid: `SMpwo${Date.now()}`, From: business.ownerCell, To: business.businessNumber, Body: 'won 650' });
+    expect(await reply.text()).toMatch(/Logged a \$650 job from .*Recovered this month: \$650/);
+
+    const { data: jobs } = await db.from('jobs_won').select('amount_cents, contact_number').eq('organization_id', business.orgId);
+    expect(jobs).toEqual([{ amount_cents: 65000, contact_number: customer }]);
+
+    // The owner's command text is not a customer conversation in the inbox.
+    const { data: ownerMsg } = await db.from('messages').select('type').eq('organization_id', business.orgId).eq('from_number', business.ownerCell).single();
+    expect(ownerMsg?.type).toBe('system_alert');
+  });
+});

@@ -137,6 +137,11 @@ export default function TermsPage() {
           </li>
         </ol>
         <p>We may suspend messaging or features if we reasonably believe use violates the law, carrier rules, or these Terms.</p>
+        <p>
+          <strong>Lead alerts to you.</strong> If lead alerts are on (Settings), we text the phone number your calls forward to about missed calls,
+          AI-answered calls and new customer texts, plus a daily summary. You can reply with simple commands (for example, to call a lead back
+          or log a won job). These texts count toward your plan&rsquo;s text usage. Turn them off in Settings or reply STOP at any time.
+        </p>
       </section>
 
       <section>

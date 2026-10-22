@@ -974,6 +974,41 @@ async function runTestSuite() {
         return { pass: res.rowCount === 0, received: `rows updated: ${res.rowCount}`, expected: 'rows updated: 0' };
       },
     },
+    {
+      id: 59,
+      name: "Owner sees their own won jobs and alerts, never another organization's",
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      setup: [
+        "INSERT INTO public.jobs_won (organization_id, amount_cents) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 65000), ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 99900)",
+        "INSERT INTO public.owner_alerts (organization_id, kind, dedupe_key) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'digest', 'digest:a'), ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'digest', 'digest:b')",
+      ],
+      run: async (c) => {
+        const jobs = await c.query('SELECT amount_cents FROM public.jobs_won');
+        const alerts = await c.query('SELECT dedupe_key FROM public.owner_alerts');
+        const got = `jobs: ${jobs.rows.map((r) => r.amount_cents).join(',')}, alerts: ${alerts.rows.map((r) => r.dedupe_key).join(',')}`;
+        return { pass: got === 'jobs: 65000, alerts: digest:a', received: got, expected: 'jobs: 65000, alerts: digest:a' };
+      },
+    },
+    {
+      id: 60,
+      name: 'Clients cannot log won jobs directly; the server does (SQLSTATE 42501)',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) =>
+        expectThrows(c, "INSERT INTO public.jobs_won (organization_id, amount_cents) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 1)", '42501'),
+    },
+    {
+      id: 61,
+      name: 'Owner can turn lead alerts off on their own line',
+      role: 'authenticated',
+      claims: { sub: '11111111-1111-1111-1111-111111111111', role: 'authenticated' },
+      run: async (c) => {
+        const res = await c.query("UPDATE public.twilio_configs SET owner_alerts_enabled = false WHERE organization_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' RETURNING owner_alerts_enabled");
+        const ok = res.rowCount > 0 && res.rows.every((r) => r.owner_alerts_enabled === false);
+        return { pass: ok, received: `updated: ${res.rowCount > 0}, all off: ${res.rows.every((r) => r.owner_alerts_enabled === false)}`, expected: 'updated: true, all off: true' };
+      },
+    },
   ];
 
   console.log(`=== RUNNING ${tests.length} ASSERTIONS (TRANSACTION ISOLATED & ROLLED BACK) ===\n`);
@@ -989,6 +1024,8 @@ async function runTestSuite() {
     let expected = '';
 
     try {
+      // Optional seed rows, written as the superuser inside the same rolled-back transaction.
+      for (const sql of test.setup ?? []) await client.query(sql);
       if (test.role) {
         await client.query(`SET LOCAL ROLE ${test.role};`);
       }

@@ -216,6 +216,7 @@ export function buildDemoData(now: Date = new Date()) {
     calls: 47,
     rescued: 12,
     textsSent: 31,
+    recoveredCents: 235000, // sample: jobs the owner logged as won by text
     monthStart,
   };
 

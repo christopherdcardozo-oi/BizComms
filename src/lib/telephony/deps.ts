@@ -1,5 +1,7 @@
 import 'server-only';
 import { serverEnv, webhookUrl } from '../config/env';
+import { getOwnerCaller } from '../owner/caller';
+import { SupabaseOwnerStore } from '../owner/supabase-store';
 import { getSmsProvider } from '../providers/sms';
 import { getTelephonyProvider } from '../providers/telephony';
 import { getReplayBuffer } from '../queue/replay-buffer';
@@ -34,6 +36,7 @@ export function getTelephonyDeps(): TelephonyDeps {
     actionUrl: (leg) => webhookUrl(`/api/incoming-call/action?leg=${leg}`),
     smsStatusUrl: webhookUrl('/api/sms/status'),
     smsKeywordReplies: serverEnv.smsKeywordReplies(),
+    owner: { store: new SupabaseOwnerStore(getSupabaseAdmin()), caller: getOwnerCaller() },
     vapi: {
       sipEndpoint: serverEnv.vapiSipEndpoint(),
       defaultSipUri: serverEnv.vapiDefaultSipUri(),

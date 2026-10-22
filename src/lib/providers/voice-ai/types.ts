@@ -5,6 +5,8 @@ export interface ReceptionistConfig {
   firstMessage: string;
   sipUri: string; // sip:bizcomms-<orgId>@sip.vapi.ai
   webhookUrl: string;
+  // How the end-of-call summary is written (it is texted to the owner; 'URGENT:' prefix marks urgent calls).
+  summaryPrompt?: string;
 }
 
 export interface ProvisionedReceptionist {

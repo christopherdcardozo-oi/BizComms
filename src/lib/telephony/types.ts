@@ -1,3 +1,4 @@
+import type { OwnerDeps } from '../owner/types';
 import type { A2PStatus, CallOutcome, CallStatus, MessageStatus, MessageType, OptOutSource } from '../../types/database.types';
 import type { ISmsProvider } from '../providers/sms/types';
 import type { ITelephonyProvider } from '../providers/telephony/types';
@@ -25,6 +26,8 @@ export interface LineConfig {
   subscriptionStatus: string | null;
   // Stripe price of the subscription; decides the plan's features (billing/plans.ts).
   stripePriceId?: string | null;
+  // Lead alerts texted to forwardToNumber (owner texting command center). Defaults to on.
+  ownerAlertsEnabled?: boolean;
 }
 
 export interface UsageStatus {
@@ -63,6 +66,7 @@ export interface InboundMessageRecord {
   fromNumber: string;
   toNumber: string;
   body: string;
+  type?: MessageType; // 'system_alert' for the owner's command texts; defaults to 'manual_chat'
 }
 
 // The Twilio call an AI (Vapi) call belongs to.
@@ -150,6 +154,8 @@ export interface TelephonyDeps {
   smsKeywordReplies: 'twilio' | 'app';
   // defaultSipUri: platform-level Vapi SIP number used only in degraded mode (DB unreachable).
   vapi: { sipEndpoint: string; defaultSipUri?: string; webhookSecret?: string };
+  // Owner texting command center; absent means no owner alerts or commands.
+  owner?: OwnerDeps;
 }
 
 export type DialLeg = 'forward' | 'ai';

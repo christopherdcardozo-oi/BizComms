@@ -77,6 +77,7 @@ export interface SettingsState {
 const settingsSchema = z.object({
   forwardTimeoutSeconds: z.coerce.number().int().min(5).max(60),
   missedCallSmsEnabled: z.boolean(),
+  ownerAlertsEnabled: z.boolean(),
   missedCallSmsTemplate: z.string().trim().min(1, 'The text-back message cannot be empty.').max(300, 'Keep the message under 300 characters.'),
 });
 
@@ -89,6 +90,7 @@ export async function updateLineSettings(_prev: SettingsState, formData: FormDat
   const parsed = settingsSchema.safeParse({
     forwardTimeoutSeconds: formData.get('forwardTimeoutSeconds'),
     missedCallSmsEnabled: formData.get('missedCallSmsEnabled') === 'on',
+    ownerAlertsEnabled: formData.get('ownerAlertsEnabled') === 'on',
     missedCallSmsTemplate: formData.get('missedCallSmsTemplate'),
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
@@ -105,6 +107,7 @@ export async function updateLineSettings(_prev: SettingsState, formData: FormDat
       forward_timeout_seconds: parsed.data.forwardTimeoutSeconds,
       missed_call_sms_enabled: parsed.data.missedCallSmsEnabled,
       missed_call_sms_template: parsed.data.missedCallSmsTemplate,
+      owner_alerts_enabled: parsed.data.ownerAlertsEnabled,
     })
     .eq('id', line.id);
   if (error) return { error: 'Could not save settings. Please check the values and try again.' };

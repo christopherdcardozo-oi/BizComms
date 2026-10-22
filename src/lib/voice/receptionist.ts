@@ -13,6 +13,19 @@ export function receptionistGreeting(businessName: string): string {
 // so calls end the moment the job is captured instead of idling until the caller hangs up.
 export const RECEPTIONIST_CLOSING = 'Thanks for calling, someone will be in touch soon. Goodbye.';
 
+// The end-of-call summary is texted to the owner, so it must read well on a phone, and it starts
+// with "URGENT:" for urgent calls (owner/alerts.ts flags those).
+export function receptionistSummaryPrompt(businessUrgent?: string): string {
+  const extra = businessUrgent?.trim() ? ` This business also treats these as urgent: ${businessUrgent.trim()}` : '';
+  return [
+    'You summarize phone calls for a busy tradesperson who will read this as a text message.',
+    'In one or two short sentences, give the caller name, callback number, job address, and the problem, using only what was said on the call.',
+    'If the call is urgent (an active leak or flooding, no heat in freezing weather, no cooling in extreme heat, a gas smell, smoke, sparking or burning, a sewage backup, someone trapped, or the caller says it is an emergency), start the summary with "URGENT: ".' +
+      extra,
+    'Otherwise never use the word urgent.',
+  ].join(' ');
+}
+
 export function receptionistPrompt(businessName: string, ownerInstructions: string | null, businessContext: string[] = []): string {
   return [
     `You are the phone receptionist for ${businessName}, a local service business.`,
@@ -63,6 +76,7 @@ export async function provisionReceptionist(
         firstMessage: receptionistGreeting(org.name),
         sipUri: vapiSipUri(organizationId, deps.sipHost),
         webhookUrl: deps.webhookUrl,
+        summaryPrompt: receptionistSummaryPrompt(parseBusinessProfile(org.businessProfile).emergencies),
       },
       { assistantId: org.vapiAssistantId, phoneNumberId: org.vapiPhoneNumberId }
     );

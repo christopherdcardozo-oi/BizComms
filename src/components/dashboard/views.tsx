@@ -10,14 +10,18 @@ import type { CallDetail, CallLogRow } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
 import { cn } from '@/lib/ui/cn';
 
-export function MonthStats({ stats }: { stats: { calls: number; rescued: number; textsSent: number } }) {
+export function MonthStats({ stats }: { stats: { calls: number; rescued: number; textsSent: number; recoveredCents?: number } }) {
+  const cards = [
+    { label: 'Calls this month', value: String(stats.calls) },
+    { label: 'Missed callers texted back', value: String(stats.rescued) },
+    { label: 'Texts sent', value: String(stats.textsSent) },
+    ...(stats.recoveredCents !== undefined
+      ? [{ label: 'Recovered (jobs you logged)', value: `$${Math.round(stats.recoveredCents / 100).toLocaleString('en-US')}` }]
+      : []),
+  ];
   return (
-    <section className="grid gap-4 sm:grid-cols-3" aria-label="This month">
-      {[
-        { label: 'Calls this month', value: stats.calls },
-        { label: 'Missed callers texted back', value: stats.rescued },
-        { label: 'Texts sent', value: stats.textsSent },
-      ].map((s) => (
+    <section className={cn('grid gap-4 sm:grid-cols-3', cards.length === 4 && 'sm:grid-cols-2 lg:grid-cols-4')} aria-label="This month">
+      {cards.map((s) => (
         <Card key={s.label}>
           <CardHeader className="pb-2">
             <CardDescription>{s.label}</CardDescription>

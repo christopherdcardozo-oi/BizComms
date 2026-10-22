@@ -38,13 +38,16 @@ check each provider's current pricing.
    (Pro is about $20 a month). Set every variable from `.env.local` on the host, plus
    `NEXT_PUBLIC_APP_URL` and `TWILIO_WEBHOOK_BASE_URL` set to `https://your-domain`.
 5. **Scheduled jobs:** call these every few minutes with header `Authorization: Bearer $CRON_SECRET`:
-   `/api/cron/replay-webhooks`, `/api/cron/review-sync`, and daily `/api/cron/release-lapsed-numbers`.
+   `/api/cron/replay-webhooks`, `/api/cron/review-sync`, hourly on the hour `/api/cron/owner-digest` (the
+   7am owner summary), and daily `/api/cron/release-lapsed-numbers`.
    A free scheduler (for example cron-job.org or GitHub Actions) works.
 6. **Stripe webhook:** add `https://your-domain/api/stripe/webhook` with the events listed in
    `.env.local.example`, and put the signing secret in `STRIPE_WEBHOOK_SECRET`.
 7. **Twilio ($):** upgrade from trial, then register for business texting (A2P 10DLC brand and
    campaign: roughly $20 one-time plus a few dollars a month). Texting doesn't work until the
    campaign is approved, which can take days to weeks. Numbers are about $1–2 a month each.
+   When registering each customer's texting campaign, include **account notifications** in the use case
+   (owner lead alerts) alongside customer care.
 8. **Vapi ($ per minute):** add a payment method before credits run out; point its webhook at
    `https://your-domain/api/vapi/webhook`.
 9. **Rotate secrets** that were pasted into chat or a terminal earlier (Twilio auth token, database

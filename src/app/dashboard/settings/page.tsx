@@ -43,6 +43,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               forwardTimeoutSeconds={line.forward_timeout_seconds}
               missedCallSmsEnabled={line.missed_call_sms_enabled}
               missedCallSmsTemplate={line.missed_call_sms_template}
+              ownerAlertsEnabled={line.owner_alerts_enabled ?? true}
               canEdit={canManage(session.role)}
             />
           ) : null}

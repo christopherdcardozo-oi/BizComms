@@ -52,6 +52,18 @@ export class VapiProvider implements IVoiceAiProvider {
       backgroundSound: 'off',
       backgroundSpeechDenoisingPlan: { smartDenoisingPlan: { enabled: true } },
       stopSpeakingPlan: { numWords: 2 },
+      ...(config.summaryPrompt
+        ? {
+            analysisPlan: {
+              summaryPlan: {
+                messages: [
+                  { role: 'system', content: config.summaryPrompt },
+                  { role: 'user', content: 'Here is the transcript:\n\n{{transcript}}' },
+                ],
+              },
+            },
+          }
+        : {}),
       serverMessages: ['end-of-call-report', 'status-update'],
       server: {
         url: config.webhookUrl,

@@ -26,6 +26,7 @@ interface LineRow {
   missed_call_sms_template: string;
   ai_voice_enabled: boolean;
   after_hours_direct_to_ai: boolean;
+  owner_alerts_enabled: boolean;
   organizations: {
     name: string;
     timezone: string;
@@ -50,7 +51,7 @@ export class SupabaseCallRepository implements CallRepository {
         .from('twilio_configs')
         .select(
           'id, organization_id, twilio_phone_number, forward_to_number, forward_timeout_seconds, abandon_threshold_seconds, ' +
-            'missed_call_sms_enabled, missed_call_sms_template, ai_voice_enabled, after_hours_direct_to_ai, ' +
+            'missed_call_sms_enabled, missed_call_sms_template, ai_voice_enabled, after_hours_direct_to_ai, owner_alerts_enabled, ' +
             'organizations!inner(name, timezone, business_hours, vapi_phone_number_id, subscription_status, stripe_price_id)'
         )
         .eq('twilio_phone_number', twilioPhoneNumber)
@@ -69,6 +70,7 @@ export class SupabaseCallRepository implements CallRepository {
       missedCallSmsTemplate: row.missed_call_sms_template,
       aiVoiceEnabled: row.ai_voice_enabled,
       afterHoursDirectToAi: row.after_hours_direct_to_ai,
+      ownerAlertsEnabled: row.owner_alerts_enabled,
       businessName: row.organizations.name,
       timezone: row.organizations.timezone,
       businessHours: row.organizations.business_hours,
@@ -216,7 +218,7 @@ export class SupabaseCallRepository implements CallRepository {
             body: input.body,
             direction: 'inbound',
             status: 'received',
-            type: 'manual_chat',
+            type: input.type ?? 'manual_chat',
           },
           { onConflict: 'message_sid', ignoreDuplicates: true }
         )

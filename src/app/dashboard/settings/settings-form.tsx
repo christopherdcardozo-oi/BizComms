@@ -14,6 +14,7 @@ export function SettingsForm({
   forwardTimeoutSeconds,
   missedCallSmsEnabled,
   missedCallSmsTemplate,
+  ownerAlertsEnabled,
   canEdit,
 }: {
   businessName: string;
@@ -21,6 +22,7 @@ export function SettingsForm({
   forwardTimeoutSeconds: number;
   missedCallSmsEnabled: boolean;
   missedCallSmsTemplate: string;
+  ownerAlertsEnabled: boolean;
   canEdit: boolean;
 }) {
   const [state, action, pending] = useActionState(updateLineSettings, {});
@@ -47,6 +49,16 @@ export function SettingsForm({
           />
           <p className="text-xs text-muted-foreground">
             Keep this shorter than your cell&apos;s voicemail pickup (usually 20–25 seconds), or voicemail will answer first.
+          </p>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="flex items-center gap-3 text-sm font-medium">
+            <input type="checkbox" name="ownerAlertsEnabled" defaultChecked={ownerAlertsEnabled} className="h-4 w-4 accent-primary" />
+            Text me about new leads (sent to {forwardTo})
+          </label>
+          <p className="pl-7 text-xs text-muted-foreground">
+            Missed calls, AI calls and new texts, plus a 7am summary. Reply 1 to call the lead back, 2 to text them that you&apos;ll call
+            shortly, or &quot;won 650&quot; to log a won job. Text STOP to turn these off.
           </p>
         </div>
         <label className="flex items-center gap-3 text-sm font-medium">

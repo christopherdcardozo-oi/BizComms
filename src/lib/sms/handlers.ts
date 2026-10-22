@@ -1,6 +1,8 @@
 import type { MessageStatus } from '../../types/database.types';
 import { E164 } from '../telephony/rescue-sms';
 import type { LineConfig, TelephonyDeps, WebhookResponse } from '../telephony/types';
+import { notifyInboundText } from '../owner/alerts';
+import { handleOwnerCommand } from '../owner/commands';
 import { buildMessagingTwiML } from '../twilio/messaging-twiml';
 import {
   classifyInboundSms,
@@ -32,7 +34,7 @@ const MESSAGE_STATUS_MAP: Record<string, MessageStatus> = {
 
 export type InboundSmsResult =
   | { status: 'ignored' }
-  | { status: 'applied' | 'duplicate'; line: LineConfig; intent: SmsIntent; source: IntentSource };
+  | { status: 'applied' | 'duplicate'; line: LineConfig; intent: SmsIntent; source: IntentSource; fromOwner: boolean };
 
 // The database half of an inbound SMS: opt-out state first (the compliance-critical write), then
 // the message row. Safe to run more than once for the same MessageSid, which is what the replay
@@ -45,6 +47,8 @@ export async function applyInboundSms(params: Params, deps: TelephonyDeps): Prom
   if (!line) return { status: 'ignored' };
 
   const { intent, source } = classifyInboundSms(body, optOutType);
+  // The owner texting their own business number is a command, not a customer conversation.
+  const fromOwner = from === line.forwardToNumber;
   if (intent === 'opt_out') await deps.repo.recordOptOut(line.organizationId, from, 'inbound_stop');
   if (intent === 'opt_in') await deps.repo.clearOptOut(line.organizationId, from);
 
@@ -54,8 +58,9 @@ export async function applyInboundSms(params: Params, deps: TelephonyDeps): Prom
     fromNumber: from,
     toNumber: line.twilioPhoneNumber,
     body,
+    type: fromOwner ? 'system_alert' : 'manual_chat',
   });
-  return { status: stored === 'new' ? 'applied' : 'duplicate', line, intent, source };
+  return { status: stored === 'new' ? 'applied' : 'duplicate', line, intent, source, fromOwner };
 }
 
 function replyFor(result: InboundSmsResult, deps: TelephonyDeps): string | undefined {
@@ -98,6 +103,22 @@ export async function handleInboundSms(params: Params, deps: TelephonyDeps): Pro
       deps.logger.error('Replay buffer enqueue failed', { messageSid: params.MessageSid, error: String(bufferErr) });
       return { status: 500 };
     }
+  }
+
+  if (result.status === 'applied' && result.intent === 'message' && deps.owner && !deps.killSwitch) {
+    const { line } = result;
+    if (result.fromOwner) {
+      return { status: 200, twiml: buildMessagingTwiML(await handleOwnerCommand(line, params.Body ?? '', deps)) };
+    }
+    const from = params.From;
+    const body = params.Body ?? '';
+    return {
+      status: 200,
+      twiml: buildMessagingTwiML(replyFor(result, deps)),
+      background: async () => {
+        await notifyInboundText(line, from, body, deps.now(), deps);
+      },
+    };
   }
 
   return { status: 200, twiml: buildMessagingTwiML(replyFor(result, deps)) };

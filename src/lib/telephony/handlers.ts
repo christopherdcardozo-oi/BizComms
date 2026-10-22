@@ -3,6 +3,7 @@ import { planFeatures } from '../billing/plans';
 import { billingAllowsService } from '../billing/status';
 import { CALL_SID_HEADER, ORG_ID_HEADER, vapiSipUri } from '../voice/sip';
 import { isWithinBusinessHours } from './business-hours';
+import { notifyMissedCall } from '../owner/alerts';
 import { E164, rescueMissedCall } from './rescue-sms';
 import type { DialLeg, LineConfig, TelephonyDeps, WebhookResponse } from './types';
 
@@ -153,9 +154,10 @@ export async function handleDialAction(params: Params, leg: DialLeg, deps: Telep
       : undefined;
 
   const rescue = (outcome: CallOutcome | undefined, outcomeIfSent?: CallOutcome) =>
-    safely(deps, 'Rescue SMS', () =>
-      rescueMissedCall({ line: lineConfig, callSid, callerNumber: from ?? '', outcome, outcomeIfSent }, deps)
-    );
+    safely(deps, 'Rescue SMS', async () => {
+      const result = await rescueMissedCall({ line: lineConfig, callSid, callerNumber: from ?? '', outcome, outcomeIfSent }, deps);
+      if (E164.test(from ?? '')) await notifyMissedCall(lineConfig, callSid, from, result === 'sent', deps);
+    });
 
   if (dialStatus === 'completed') {
     // Forward leg: a human (or carrier voicemail, see DESIGN_NOTES §2) picked up.

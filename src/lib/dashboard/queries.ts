@@ -17,6 +17,7 @@ export interface PrimaryLine {
   missed_call_sms_template: string;
   ai_voice_enabled: boolean;
   after_hours_direct_to_ai: boolean;
+  owner_alerts_enabled: boolean;
 }
 
 export interface CallLogRow {
@@ -39,7 +40,7 @@ export async function getPrimaryLine(db: SupabaseClient): Promise<PrimaryLine | 
   const { data, error } = await db
     .from('twilio_configs')
     .select(
-      'id, twilio_phone_number, twilio_phone_sid, forward_to_number, forward_timeout_seconds, missed_call_sms_enabled, missed_call_sms_template, ai_voice_enabled, after_hours_direct_to_ai'
+      'id, twilio_phone_number, twilio_phone_sid, forward_to_number, forward_timeout_seconds, missed_call_sms_enabled, missed_call_sms_template, ai_voice_enabled, after_hours_direct_to_ai, owner_alerts_enabled'
     )
     .eq('is_primary', true)
     .maybeSingle();
@@ -82,10 +83,11 @@ export async function listCallLogs(db: SupabaseClient, limit = 100): Promise<Cal
 
 export async function getMonthStats(db: SupabaseClient) {
   const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();
-  const [calls, rescued, usage] = await Promise.all([
+  const [calls, rescued, usage, won] = await Promise.all([
     db.from('call_logs').select('id', { count: 'exact', head: true }).gte('created_at', monthStart),
     db.from('call_logs').select('id', { count: 'exact', head: true }).gte('created_at', monthStart).eq('sms_rescued', true),
     db.from('usage_records').select('sms_messages_sent').eq('billing_period_start', monthStart).maybeSingle(),
+    db.from('jobs_won').select('amount_cents').gte('created_at', monthStart),
   ]);
   if (calls.error) fail('getMonthStats calls', calls.error);
   if (rescued.error) fail('getMonthStats rescued', rescued.error);
@@ -93,13 +95,21 @@ export async function getMonthStats(db: SupabaseClient) {
     calls: calls.count ?? 0,
     rescued: rescued.count ?? 0,
     textsSent: (usage.data as { sms_messages_sent: number } | null)?.sms_messages_sent ?? 0,
+    // Jobs the owner logged as won ("won 650" by text). Missing table on an old DB reads as zero.
+    recoveredCents: ((won.data ?? []) as Array<{ amount_cents: number | null }>).reduce((s, r) => s + (r.amount_cents ?? 0), 0),
   };
 }
 
 const MESSAGE_COLUMNS = 'id, direction, from_number, to_number, body, status, type, error_code, created_at';
 
 export async function listRecentMessages(db: SupabaseClient, limit = 500): Promise<InboxMessage[]> {
-  const { data, error } = await db.from('messages').select(MESSAGE_COLUMNS).order('created_at', { ascending: false }).limit(limit);
+  // Owner alerts and the owner's command texts (type system_alert) are not customer conversations.
+  const { data, error } = await db
+    .from('messages')
+    .select(MESSAGE_COLUMNS)
+    .neq('type', 'system_alert')
+    .order('created_at', { ascending: false })
+    .limit(limit);
   if (error) fail('listRecentMessages', error);
   return (data ?? []) as InboxMessage[];
 }
@@ -109,6 +119,7 @@ export async function getThread(db: SupabaseClient, contact: string): Promise<In
     .from('messages')
     .select(MESSAGE_COLUMNS)
     .or(`and(direction.eq.inbound,from_number.eq.${contact}),and(direction.eq.outbound_api,to_number.eq.${contact})`)
+    .neq('type', 'system_alert')
     .order('created_at', { ascending: true })
     .limit(500);
   if (error) fail('getThread', error);
