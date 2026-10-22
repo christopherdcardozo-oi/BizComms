@@ -1,0 +1,8 @@
+# Never upload local secrets, prospect data, or tooling to Vercel.
+.env*
+!.env.local.example
+sales/
+.claude/
+.next/
+node_modules/
+tests/
