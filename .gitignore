@@ -28,3 +28,7 @@ data/
 # Prospect lists (business contact data; keep out of the repo)
 sales/*.csv
 sales/*.xlsx
+
+# Playwright output
+/playwright-report/
+/test-results/

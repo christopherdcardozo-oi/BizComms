@@ -31,23 +31,25 @@ check each provider's current pricing.
    `python3 scripts/set_secret_dialog.py STRIPE_SECRET_KEY --prefix sk_live_`, then run
    `node scripts/stripe-setup.mjs --live`. For a setup fee, add a one-time price and put its ID in
    `STRIPE_PRICE_SETUP_FEE`.
-2. **Domain ($, about $10–15 a year):** buy one, then point it at your host.
-3. **Hosting:** deploy the Next.js app. Vercel's free Hobby plan doesn't allow commercial use
+2. **Supabase Pro ($, about $25 a month):** free projects pause after about a week without
+   activity, which would stop calls from being logged. Upgrade before the first paying customer.
+3. **Domain ($, about $10–15 a year):** buy one, then point it at your host.
+4. **Hosting:** deploy the Next.js app. Vercel's free Hobby plan doesn't allow commercial use
    (Pro is about $20 a month). Set every variable from `.env.local` on the host, plus
    `NEXT_PUBLIC_APP_URL` and `TWILIO_WEBHOOK_BASE_URL` set to `https://your-domain`.
-4. **Scheduled jobs:** call these every few minutes with header `Authorization: Bearer $CRON_SECRET`:
+5. **Scheduled jobs:** call these every few minutes with header `Authorization: Bearer $CRON_SECRET`:
    `/api/cron/replay-webhooks`, `/api/cron/review-sync`, and daily `/api/cron/release-lapsed-numbers`.
    A free scheduler (for example cron-job.org or GitHub Actions) works.
-5. **Stripe webhook:** add `https://your-domain/api/stripe/webhook` with the events listed in
+6. **Stripe webhook:** add `https://your-domain/api/stripe/webhook` with the events listed in
    `.env.local.example`, and put the signing secret in `STRIPE_WEBHOOK_SECRET`.
-6. **Twilio ($):** upgrade from trial, then register for business texting (A2P 10DLC brand and
+7. **Twilio ($):** upgrade from trial, then register for business texting (A2P 10DLC brand and
    campaign: roughly $20 one-time plus a few dollars a month). Texting doesn't work until the
    campaign is approved, which can take days to weeks. Numbers are about $1–2 a month each.
-7. **Vapi ($ per minute):** add a payment method before credits run out; point its webhook at
+8. **Vapi ($ per minute):** add a payment method before credits run out; point its webhook at
    `https://your-domain/api/vapi/webhook`.
-8. **Rotate secrets** that were pasted into chat or a terminal earlier (Twilio auth token, database
+9. **Rotate secrets** that were pasted into chat or a terminal earlier (Twilio auth token, database
    password, Vapi key) and update them on the host.
-9. **Legal:** have a lawyer review the Terms and Privacy policy. Forming an LLC is optional but
+10. **Legal:** have a lawyer review the Terms and Privacy policy. Forming an LLC is optional but
    separates your personal assets from the business.
 
 ## Later
