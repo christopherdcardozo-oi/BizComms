@@ -8,7 +8,9 @@ import type { Conversation, InboxMessage } from '@/lib/dashboard/conversations';
 import { formatDateTime, formatDuration, OUTCOME_LABELS } from '@/lib/dashboard/format';
 import type { CallDetail, CallLogRow } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
+import { describeCallDecisions } from '@/lib/oversight/model';
 import { cn } from '@/lib/ui/cn';
+import { CallDecisions } from './ai-views';
 
 export function MonthStats({ stats }: { stats: { calls: number; rescued: number; textsSent: number; recoveredCents?: number } }) {
   const cards = [
@@ -187,6 +189,7 @@ export function CallDetailView({ call, timezone, basePath }: { call: CallDetail;
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
+          <CallDecisions steps={describeCallDecisions(call)} />
           <div className="flex flex-wrap gap-2">
             <Link
               href={`${basePath}/inbox/${encodeURIComponent(call.from_number)}`}

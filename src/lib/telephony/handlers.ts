@@ -4,7 +4,7 @@ import { billingAllowsService } from '../billing/status';
 import { CALL_SID_HEADER, ORG_ID_HEADER, vapiSipUri } from '../voice/sip';
 import { isWithinBusinessHours } from './business-hours';
 import { notifyMissedCall } from '../owner/alerts';
-import { E164, rescueMissedCall } from './rescue-sms';
+import { E164, recordRescueOutcome, rescueMissedCall } from './rescue-sms';
 import type { DialLeg, LineConfig, TelephonyDeps, WebhookResponse } from './types';
 
 const TERMINAL_STATUSES: ReadonlySet<CallStatus> = new Set(['completed', 'busy', 'failed', 'no-answer', 'canceled']);
@@ -156,6 +156,7 @@ export async function handleDialAction(params: Params, leg: DialLeg, deps: Telep
   const rescue = (outcome: CallOutcome | undefined, outcomeIfSent?: CallOutcome) =>
     safely(deps, 'Rescue SMS', async () => {
       const result = await rescueMissedCall({ line: lineConfig, callSid, callerNumber: from ?? '', outcome, outcomeIfSent }, deps);
+      await recordRescueOutcome(deps, callSid, lineConfig.organizationId, result);
       if (E164.test(from ?? '')) await notifyMissedCall(lineConfig, callSid, from, result === 'sent', deps);
     });
 

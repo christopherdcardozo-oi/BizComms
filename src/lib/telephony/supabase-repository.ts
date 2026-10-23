@@ -205,6 +205,13 @@ export class SupabaseCallRepository implements CallRepository {
     );
   }
 
+  async recordRescueResult(callSid: string, organizationId: string, result: string): Promise<void> {
+    check(
+      await this.db.from('call_logs').update({ sms_rescue_result: result }).eq('call_sid', callSid).eq('organization_id', organizationId),
+      'recordRescueResult'
+    );
+  }
+
   async recordInboundMessage(input: InboundMessageRecord): Promise<'new' | 'duplicate'> {
     const inserted = check(
       await this.db

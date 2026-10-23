@@ -102,6 +102,8 @@ export class InMemoryRepo implements CallRepository {
   async recordOutboundMessage(input: OutboundMessageRecord) {
     this.messages.push(input);
   }
+  // Optional in CallRepository; tests that care assign a spy.
+  recordRescueResult?: (callSid: string, organizationId: string, result: string) => Promise<void>;
   async incrementSmsUsage() {
     this.smsUsage++;
   }

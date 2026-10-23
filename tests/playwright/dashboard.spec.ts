@@ -82,3 +82,21 @@ test('Text-Back shows forwarded minutes against the fair-use allowance, and warn
   await expect(page.getByText('Forwarded call minutes this month:')).toContainText('450 of 500');
   await expect(page.getByText(/close to your plan's fair-use allowance\. Calls keep forwarding as normal/)).toBeVisible();
 });
+
+test('the AI page shows usage, activity with decisions, permissions and the exact instructions', async ({ page, business }) => {
+  await page.getByRole('link', { name: 'AI', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your AI' })).toBeVisible();
+  await expect(page.locator('#usage')).toContainText('Texts sent');
+  await expect(page.locator('#activity')).toContainText('The AI answered and took the details');
+  await expect(page.locator('#permissions')).toContainText('Quote prices');
+  await expect(page.locator('#permissions')).toContainText('Never');
+
+  await page.locator('#instructions summary', { hasText: 'AI receptionist: instructions' }).click();
+  await expect(page.locator('#instructions pre').first()).toContainText(`You are the phone receptionist for ${business.name}`);
+});
+
+test('a call detail page explains what happened, step by step', async ({ page, business }) => {
+  await page.getByRole('link', { name: pretty(business.aiCaller) }).click();
+  await expect(page.getByRole('heading', { name: 'What happened' })).toBeVisible();
+  await expect(page.getByText(/The AI answered and took the details/)).toBeVisible();
+});

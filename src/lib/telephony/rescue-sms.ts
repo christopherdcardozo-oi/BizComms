@@ -26,6 +26,17 @@ export type RescueResult =
 // Missed-call text-back (Case A in DESIGN_NOTES §1; reused by the Vapi webhook for Case B).
 // Records the call outcome first so a row exists to claim, then runs every compliance gate,
 // then claims sms_rescued atomically so at most one text is ever sent per call.
+// Records the outcome for the owner's oversight view; a redelivered callback ('already_rescued')
+// never overwrites the original result. Never throws.
+export async function recordRescueOutcome(deps: Pick<TelephonyDeps, 'repo' | 'logger'>, callSid: string, organizationId: string, result: RescueResult) {
+  if (result === 'already_rescued' || !deps.repo.recordRescueResult) return;
+  try {
+    await deps.repo.recordRescueResult(callSid, organizationId, result);
+  } catch (err) {
+    deps.logger.warn('Recording the text-back result failed', { callSid, error: String(err) });
+  }
+}
+
 export async function rescueMissedCall(
   input: {
     line: LineConfig;

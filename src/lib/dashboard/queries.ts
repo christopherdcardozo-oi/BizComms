@@ -1,4 +1,5 @@
 import 'server-only';
+import type { AlertFacts, CallFacts, ReviewFacts } from '../oversight/model';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { A2PStatus, CallOutcome, CallStatus } from '../../types/database.types';
 import type { BusinessHours } from '../telephony/business-hours';
@@ -134,6 +135,7 @@ export async function isContactOptedOut(db: SupabaseClient, contact: string): Pr
 
 export interface CallDetail extends CallLogRow {
   to_number: string;
+  sms_rescue_result?: string | null;
   transcript: string | null;
   recording_url: string | null;
   vapi_ended_reason: string | null;
@@ -143,7 +145,7 @@ export interface CallDetail extends CallLogRow {
 export async function getCallDetail(db: SupabaseClient, id: string): Promise<CallDetail | null> {
   const { data, error } = await db
     .from('call_logs')
-    .select('id, from_number, to_number, status, outcome, duration_seconds, sms_rescued, ai_summary, transcript, recording_url, vapi_ended_reason, started_at, ended_at, created_at')
+    .select('id, from_number, to_number, status, outcome, duration_seconds, sms_rescued, sms_rescue_result, ai_summary, transcript, recording_url, vapi_ended_reason, started_at, ended_at, created_at')
     .eq('id', id)
     .maybeSingle();
   if (error) fail('getCallDetail', error);
@@ -209,4 +211,55 @@ export async function getForwardedMinutesThisMonth(db: SupabaseClient, now: Date
   if (error) fail('getForwardedMinutesThisMonth', error);
   const seconds = ((data ?? []) as Array<{ duration_seconds: number | null }>).reduce((sum, r) => sum + (r.duration_seconds ?? 0), 0);
   return Math.ceil(seconds / 60);
+}
+
+// ---------------------------------------------------------------------------
+// AI oversight (/dashboard/ai). All reads go through RLS as the signed-in user.
+// ---------------------------------------------------------------------------
+export async function getUsageThisMonth(db: SupabaseClient, organizationId: string, now: Date = new Date()) {
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const [usage, org, alerts] = await Promise.all([
+    db.from('usage_records').select('ai_voice_seconds_used, sms_messages_sent, ai_review_replies_generated').eq('billing_period_start', monthStart).maybeSingle(),
+    db.from('organizations').select('monthly_voice_minutes_limit, monthly_sms_limit').eq('id', organizationId).single(),
+    db.from('owner_alerts').select('id', { count: 'exact', head: true }).gte('created_at', monthStart),
+  ]);
+  if (org.error) fail('getUsageThisMonth limits', org.error);
+  const u = usage.data as { ai_voice_seconds_used: number; sms_messages_sent: number; ai_review_replies_generated: number } | null;
+  const limits = org.data as { monthly_voice_minutes_limit: number; monthly_sms_limit: number };
+  return {
+    aiMinutes: Math.ceil((u?.ai_voice_seconds_used ?? 0) / 60),
+    aiMinutesLimit: limits.monthly_voice_minutes_limit,
+    texts: u?.sms_messages_sent ?? 0,
+    textsLimit: limits.monthly_sms_limit,
+    reviewDrafts: u?.ai_review_replies_generated ?? 0,
+    ownerAlerts: alerts.count ?? 0,
+  };
+}
+
+export async function listCallFacts(db: SupabaseClient, sinceIso: string, limit = 40) {
+  const { data, error } = await db
+    .from('call_logs')
+    .select('id, status, outcome, duration_seconds, sms_rescued, sms_rescue_result, ai_summary, started_at, created_at, from_number')
+    .gte('created_at', sinceIso)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) fail('listCallFacts', error);
+  return (data ?? []) as CallFacts[];
+}
+
+export async function listOwnerAlerts(db: SupabaseClient, sinceIso: string, limit = 40) {
+  const { data, error } = await db.from('owner_alerts').select('kind, created_at, urgent').gte('created_at', sinceIso).order('created_at', { ascending: false }).limit(limit);
+  if (error) fail('listOwnerAlerts', error);
+  return (data ?? []) as AlertFacts[];
+}
+
+export async function listReviewFacts(db: SupabaseClient, sinceIso: string, limit = 40) {
+  const { data, error } = await db
+    .from('reviews')
+    .select('id, reviewer_name, star_rating, reply_status, ai_model, review_created_at, reply_published_at, approved_by')
+    .gte('review_created_at', sinceIso)
+    .order('review_created_at', { ascending: false })
+    .limit(limit);
+  if (error) fail('listReviewFacts', error);
+  return (data ?? []) as ReviewFacts[];
 }

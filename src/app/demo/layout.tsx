@@ -40,6 +40,7 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
             <NavLink href="/demo">Calls</NavLink>
             <NavLink href="/demo/inbox">Inbox</NavLink>
             <NavLink href="/demo/reviews">Reviews</NavLink>
+            <NavLink href="/demo/ai">AI</NavLink>
           </nav>
         </div>
       </header>

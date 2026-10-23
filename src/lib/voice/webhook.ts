@@ -1,6 +1,6 @@
 import type { CallOutcome } from '../../types/database.types';
 import { notifyAiCall, notifyMissedCall } from '../owner/alerts';
-import { E164, rescueMissedCall } from '../telephony/rescue-sms';
+import { E164, recordRescueOutcome, rescueMissedCall, type RescueResult } from '../telephony/rescue-sms';
 import type { CallRef, TelephonyDeps } from '../telephony/types';
 import { isAuthorizedVapiRequest } from './auth';
 import { parseVapiServerMessage, type AiCallReport } from './report';
@@ -125,13 +125,14 @@ export async function handleVapiWebhook(
       return { status: 200, body: { matched: false } };
     }
 
-    let rescue: string | undefined;
+    let rescue: RescueResult | undefined;
     if (classification.rescue && line) {
       // claim_sms_rescue makes this at-most-once even if Module A already texted the caller.
       rescue = await rescueMissedCall(
         { line, callSid: ref.callSid, callerNumber: ref.fromNumber, outcome: classification.outcome, outcomeIfSent: classification.outcomeIfSent },
         deps
       );
+      await recordRescueOutcome(deps, ref.callSid, ref.organizationId, rescue);
     }
     // Owner alert (never throws): a failed AI call reads as a missed call, otherwise the summary.
     if (line) {

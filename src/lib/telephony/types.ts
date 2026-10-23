@@ -101,6 +101,8 @@ export interface CallRepository {
   claimSmsRescue(callSid: string, organizationId: string): Promise<boolean>;
   recordOutboundMessage(input: OutboundMessageRecord): Promise<void>;
   incrementSmsUsage(organizationId: string): Promise<void>;
+  // Why a missed caller was or wasn't texted (shown on the AI oversight page). Optional for fakes.
+  recordRescueResult?(callSid: string, organizationId: string, result: string): Promise<void>;
   // Returns 'duplicate' only when the event was already fully processed.
   beginWebhookEvent(provider: 'twilio' | 'vapi', eventId: string, payload: Record<string, string>): Promise<'new' | 'duplicate'>;
   completeWebhookEvent(provider: 'twilio' | 'vapi', eventId: string): Promise<void>;
