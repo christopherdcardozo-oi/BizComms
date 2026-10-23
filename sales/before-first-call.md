@@ -28,7 +28,6 @@ Everything here is free unless marked $. Work top to bottom; most of it takes an
 - [ ] Do a full practice share: Meet or Zoom → share only that browser tab → click through a call, the
       inbox, the reviews, and finish on the **AI** tab ("What it can do" → the "Never" rules).
 - [ ] Know the texting pitch by heart: "Miss a call, you get a text. Reply 1 and you're talking to them."
-
 - [ ] Quiet room, earbuds or a headset, laptop plugged in, notifications off.
 
 ## 4. Fill in the placeholders
