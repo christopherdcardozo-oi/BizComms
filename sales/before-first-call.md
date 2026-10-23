@@ -26,7 +26,9 @@ Everything here is free unless marked $. Work top to bottom; most of it takes an
 
 - [ ] Start the app: in the project folder, run `npm run dev`, then open `localhost:3000/demo`.
 - [ ] Do a full practice share: Meet or Zoom → share only that browser tab → click through a call, the
-      inbox and the reviews.
+      inbox, the reviews, and finish on the **AI** tab ("What it can do" → the "Never" rules).
+- [ ] Know the texting pitch by heart: "Miss a call, you get a text. Reply 1 and you're talking to them."
+
 - [ ] Quiet room, earbuds or a headset, laptop plugged in, notifications off.
 
 ## 4. Fill in the placeholders
@@ -49,6 +51,8 @@ Practice these out loud. Owners will ask.
 | "Can I try it first?" | "Yes, there's a [14]-day free trial and no contract." |
 | "Do the Google reviews work?" | "That part is launching soon; I'm waiting on Google's approval. Text-back and the receptionist work now." |
 | "Where are you located?" | "[Ames]. I'm local." |
+| "How do I know what the AI says?" | "Every call has a transcript, and there's a page that shows the exact rules it follows and everything it's allowed to do. It never quotes prices or promises times." |
+| "Can you text me a demo?" | Only once your line is live. Until then: "Let me show you on screen what the texts look like." (Texting slide + the demo's AI tab.) |
 
 ## 6. Practice before real calls
 

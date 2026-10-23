@@ -58,8 +58,14 @@ themselves far more than what you tell them.
 ### 4. Bridge: one sentence of what you do (10 seconds)
 
 > "That's exactly what I built. When you can't pick up, the caller gets a text from your business
-> number right away, or an AI receptionist takes the job details and texts you a summary. Your
-> phone still rings first, so nothing changes about how you answer."
+> number right away, or an AI receptionist takes the job details. Then *you* get a text: reply 1
+> and your phone rings, connected to them. Your phone still rings first, so nothing changes about
+> how you answer."
+
+If they sound skeptical of AI, add one line:
+
+> "And you can see every word it says and the exact rules it follows. It never quotes prices or
+> promises times."
 
 ### 5. The ask: two choices, not yes/no (10 seconds)
 
@@ -99,6 +105,8 @@ Use the same pattern every time: **agree → ask one question → re-ask for the
 | "How much is it?" | "Plans are $29 to $129 a month, no contract. Which one makes sense depends on how many calls you miss. That's what the 15 minutes figures out. [Day] or [day]?" |
 | "Who is this again? How'd you get my number?" | "It's [Your name], a local founder. Your number's on your Google listing. I'm calling local trades businesses directly instead of buying ads." |
 | "Is this a robot/AI?" | "Nope, real person, real nervous founder." (Light humor works.) |
+| "I don't want AI talking to my customers." | "Fair. It only picks up when you can't, tells callers it's an assistant, and just takes their details. You can read every word it said. Worth 15 minutes to see it?" |
+| "I'm not going to learn another app." | "You don't have to. It texts you. Reply 1 and you're calling the customer back. That's the whole app." |
 | "Call me back later." | "Will do. When's a good time, early morning or end of day?" (Write it down and call exactly then.) |
 
 **Two "no"s means no.** Thank them, ask for a referral, and mark them "follow up in 60 days." Don't

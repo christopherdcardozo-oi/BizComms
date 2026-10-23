@@ -111,7 +111,8 @@ covering the registration wait).
 > Quick question: when you're on a job and can't pick up, what happens to that call?
 >
 > I'm a local founder in [Ames], and I built a tool that texts those callers back from your business
-> number right away, or has an AI receptionist take the job details. Your phone still rings first.
+> number right away, or has an AI receptionist take the job details. You get a text with every new
+> lead and reply "1" to call them back. No app to learn, and your phone still rings first.
 >
 > Worth a 15-minute look? Here's my calendar: [booking link]
 >
