@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { pricing } from '@/lib/site';
 import { cn } from '@/lib/ui/cn';
 import { SeparateToolsComparison } from './why-us';
+import { FoundingOffer } from './founding-offer';
 
 export function Pricing() {
   return (
@@ -55,6 +56,7 @@ export function Pricing() {
           Prices in USD. One-time {pricing.currency}
           {pricing.setupFee} setup covers carrier registration for your texting, waived on yearly plans. No contracts, cancel anytime.
         </p>
+        <FoundingOffer className="mt-8" />
       </div>
     </section>
   );

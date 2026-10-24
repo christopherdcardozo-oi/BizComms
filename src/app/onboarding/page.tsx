@@ -7,8 +7,9 @@ import { NumberStep } from './number-step';
 import { OrgForm } from './org-form';
 import { PlanStep } from './plan-step';
 import { pricing } from '@/lib/site';
+import { siteConfig } from '@/lib/site';
 
-export const metadata = { title: 'Get started · BizComms' };
+export const metadata = { title: `Get started · ${siteConfig.name}` };
 
 const STEPS = {
   business: { n: 1, title: 'Tell us about your business', description: 'You can change these later.' },
@@ -42,7 +43,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 py-12">
-      <p className="text-xl font-semibold tracking-tight">BizComms</p>
+      <p className="text-xl font-semibold tracking-tight">{siteConfig.name}</p>
       <p className="text-sm text-muted-foreground">Step {current.n} of 3</p>
       <Card key={step} className="w-full max-w-lg animate-rise">
         <CardHeader>

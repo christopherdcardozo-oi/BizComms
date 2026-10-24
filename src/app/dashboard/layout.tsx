@@ -9,6 +9,7 @@ import { billingAllowsService } from '@/lib/billing/status';
 import { releaseDate, resolveGraceDays, RELEASABLE_STATUSES } from '@/lib/numbers/release';
 import { getA2pStatus, getPrimaryLine } from '@/lib/dashboard/queries';
 import { formatNanp } from '@/lib/numbers/phone';
+import { siteConfig } from '@/lib/site';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await requireOrganization();
@@ -25,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <header className="border-b">
         <div className="container flex flex-wrap items-center justify-between gap-3 py-3">
           <div className="flex flex-col">
-            <span className="font-semibold tracking-tight">{session.organizationName ?? 'BizComms'}</span>
+            <span className="font-semibold tracking-tight">{session.organizationName ?? siteConfig.name}</span>
             {line ? <span className="text-xs text-muted-foreground">{formatNanp(line.twilio_phone_number)}</span> : null}
           </div>
           <nav className="flex items-center gap-1" aria-label="Main">

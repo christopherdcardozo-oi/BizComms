@@ -5,8 +5,9 @@ import { formatDateTime } from '@/lib/dashboard/format';
 import { getGoogleConnection, getOrganizationDetails, listReviews } from '@/lib/dashboard/queries';
 import { ReviewCard } from './review-card';
 import { SyncButton } from './sync-button';
+import { siteConfig } from '@/lib/site';
 
-export const metadata = { title: 'Reviews · BizComms' };
+export const metadata = { title: `Reviews · ${siteConfig.name}` };
 
 export default async function ReviewsPage() {
   const session = await requireOrganization();

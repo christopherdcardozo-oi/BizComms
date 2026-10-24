@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { AuthFormState } from './actions';
+import { siteConfig } from '@/lib/site';
 
 export function AuthForm({
   mode,
@@ -28,7 +29,7 @@ export function AuthForm({
       <CardHeader>
         <CardTitle>{isLogin ? 'Sign in' : 'Create your account'}</CardTitle>
         <CardDescription>
-          {isLogin ? 'Welcome back to BizComms.' : 'Never lose a job to a missed call again.'}
+          {isLogin ? `Welcome back to ${siteConfig.name}.` : 'Never lose a job to a missed call again.'}
         </CardDescription>
       </CardHeader>
       <CardContent>

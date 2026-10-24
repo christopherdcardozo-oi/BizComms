@@ -3,8 +3,9 @@ import { CallsTable, MonthStats } from '@/components/dashboard/views';
 import { Alert } from '@/components/ui/alert';
 import { requireOrganization } from '@/lib/auth/session';
 import { getMonthStats, getOrganizationDetails, listCallLogs } from '@/lib/dashboard/queries';
+import { siteConfig } from '@/lib/site';
 
-export const metadata = { title: 'Calls · BizComms' };
+export const metadata = { title: `Calls · ${siteConfig.name}` };
 
 export default async function CallsPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const session = await requireOrganization();

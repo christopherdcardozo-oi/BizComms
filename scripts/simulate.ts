@@ -14,7 +14,7 @@ process.env.USE_MOCK_VOICE_AI ??= 'true';
 process.env.USE_MOCK_GOOGLE_REVIEWS ??= 'true';
 
 async function main() {
-  console.log('--- BizComms OS: Local Simulation Script ---');
+  console.log('--- RingBack Crew: Local Simulation Script ---');
 
   // 1. Telephony Provider
   const telephony = getTelephonyProvider();

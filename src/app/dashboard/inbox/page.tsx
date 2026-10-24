@@ -3,8 +3,9 @@ import { ConversationList } from '@/components/dashboard/views';
 import { requireOrganization } from '@/lib/auth/session';
 import { groupConversations } from '@/lib/dashboard/conversations';
 import { getOrganizationDetails, listRecentMessages } from '@/lib/dashboard/queries';
+import { siteConfig } from '@/lib/site';
 
-export const metadata = { title: 'Inbox · BizComms' };
+export const metadata = { title: `Inbox · ${siteConfig.name}` };
 
 export default async function InboxPage() {
   const session = await requireOrganization();

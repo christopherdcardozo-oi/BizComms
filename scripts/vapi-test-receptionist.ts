@@ -52,7 +52,7 @@ async function main() {
     ? (JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')) as { organizationId: string; assistantId: string; phoneNumberId: string })
     : null;
   const organizationId = state?.organizationId ?? randomUUID();
-  const businessName = 'BizComms Test Plumbing';
+  const businessName = 'RingBack Crew Test Plumbing';
   const base = (e.TWILIO_WEBHOOK_BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
   const provider = new VapiProvider({

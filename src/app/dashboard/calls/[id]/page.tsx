@@ -2,8 +2,9 @@ import { notFound } from 'next/navigation';
 import { CallDetailView } from '@/components/dashboard/views';
 import { requireOrganization } from '@/lib/auth/session';
 import { getCallDetail, getOrganizationDetails } from '@/lib/dashboard/queries';
+import { siteConfig } from '@/lib/site';
 
-export const metadata = { title: 'Call details · BizComms' };
+export const metadata = { title: `Call details · ${siteConfig.name}` };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

@@ -17,8 +17,9 @@ import {
 import { formatNanp } from '@/lib/numbers/phone';
 import { buildFeed, buildPermissions, type UsageMeter } from '@/lib/oversight/model';
 import { buildPromptBlocks } from '@/lib/oversight/prompts';
+import { siteConfig } from '@/lib/site';
 
-export const metadata = { title: 'Your AI · BizComms' };
+export const metadata = { title: `Your AI · ${siteConfig.name}` };
 
 export default async function AiOversightPage() {
   const session = await requireOrganization();

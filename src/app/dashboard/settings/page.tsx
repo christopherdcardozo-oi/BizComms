@@ -10,8 +10,9 @@ import { GoogleCard } from './google-card';
 import { ProfileCard } from './profile-card';
 import { ReceptionistCard } from './receptionist-card';
 import { SettingsForm } from './settings-form';
+import { siteConfig } from '@/lib/site';
 
-export const metadata = { title: 'Settings · BizComms' };
+export const metadata = { title: `Settings · ${siteConfig.name}` };
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const session = await requireOrganization();

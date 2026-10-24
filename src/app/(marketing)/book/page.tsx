@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { FoundingOffer } from '@/components/marketing/founding-offer';
 import { launch, siteConfig } from '@/lib/site';
 
 export const metadata = {
@@ -32,6 +33,7 @@ export default function BookPage() {
           <Link href="/demo">Look around the demo first</Link>
         </Button>
       </div>
+      <FoundingOffer />
       <p className="text-sm text-muted-foreground">
         Prefer email? Write to <a href={`mailto:${siteConfig.contactEmail}`} className="underline underline-offset-4">{siteConfig.contactEmail}</a>.
       </p>

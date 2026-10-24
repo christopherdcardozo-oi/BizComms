@@ -1,12 +1,27 @@
 // Public business details used by the marketing site and legal pages.
-// TODO before launch: replace the placeholders with your real legal entity and contact details.
+// TODO before launch: replace the remaining placeholders (email, mailing address) with real details.
 export const siteConfig = {
-  name: 'BizComms',
-  legalName: 'BizComms', // e.g. "BizComms LLC" once registered
+  name: 'RingBack Crew',
+  founder: 'Chris Cardozo',
+  legalName: 'Chris Cardozo, doing business as RingBack Crew', // "RingBack Crew LLC" once registered
   contactEmail: 'support@bizcomms.example', // a real inbox on your domain
   mailingAddress: '[Business mailing address]',
   governingState: 'Iowa',
   legalEffectiveDate: 'October 20, 2026',
+};
+
+// Founding customer offer, shown on the pricing section and the book-a-demo page. Keep it true:
+// the spot count and deadline are real limits, and the guarantee is honored as written.
+export const foundingOffer = {
+  spots: 10,
+  deadline: 'December 15, 2026',
+  perks: [
+    'Setup fee waived',
+    'Set up personally with Chris on a 15-minute call',
+    'Your price locked for 12 months',
+    "Chris's direct cell for anything you need",
+  ],
+  guarantee: "If it doesn't recover at least one job in your first 30 days, your second month is free.",
 };
 
 // Launch mode. Until texting and billing are live for real customers, the public site books demos
