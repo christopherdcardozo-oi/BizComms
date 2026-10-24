@@ -1,6 +1,6 @@
 # Launch checklist
 
-What has to be true before a paying customer can use RingBack Crew. Code items are done; the rest
+What has to be true before a paying customer can use Callwell. Code items are done; the rest
 needs your accounts, your details, or (marked $) a small amount of money. Costs are estimates;
 check each provider's current pricing.
 

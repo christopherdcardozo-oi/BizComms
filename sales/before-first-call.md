@@ -4,14 +4,15 @@ Everything here is free unless marked $. Work top to bottom; most of it takes an
 
 ## 1. Look like a real business (prospects will Google you)
 
-- [x] **Name chosen: RingBack Crew.** Register ringbackcrew.com when you buy a domain (it was free
-      on Oct 24, 2026), and search the name at uspto.gov before spending on branding.
+- [x] **Name chosen: Callwell.** Register **getcallwell.com** when you buy a domain (it was free on
+      Oct 24, 2026; callwell.com is already registered), and search the name at uspto.gov before
+      spending on branding.
 - [ ] **Separate business phone number:** a free Google Voice number (voice.google.com) rings your
       cell, keeps your personal number private, and gives you a business voicemail greeting.
 - [ ] **Business email:** free for now (e.g. `[name].[business]@gmail.com`).
       $ Upgrade later with a domain (about $10–15 a year) and an address like `you@yourbusiness.com`.
 - [ ] **Voicemail greeting** on that number:
-      "You've reached Chris Cardozo at RingBack Crew. Leave a message or text this number and I'll get back to you today."
+      "You've reached Chris Cardozo at Callwell. Leave a message or text this number and I'll get back to you today."
 - [ ] **Email signature:** name · business · phone (and mailing address once you have one).
 
 ## 2. Make booking effortless

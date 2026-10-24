@@ -21,7 +21,7 @@ business name, mailing address, and a way to say "no thanks."
 > Nothing to prepare. If the time stops working, just reply and we'll move it.
 >
 > Chris Cardozo
-> RingBack Crew · [Your phone]
+> Callwell · [Your phone]
 > [Mailing address]
 
 *Why:* repeating their own problem back reminds them why they said yes, and "nothing to prepare"
@@ -49,7 +49,7 @@ move them to "Call back" in 60 days.
 
 ## 4. After the demo, if they said yes
 
-**Subject:** Getting RingBack Crew set up
+**Subject:** Getting Callwell set up
 
 > Hi [Name],
 >
@@ -85,7 +85,7 @@ covering the registration wait).
 > I'll check in [Friday] unless you get to it first. Happy to answer anything in the meantime.
 >
 > Chris Cardozo
-> RingBack Crew · [Your phone]
+> Callwell · [Your phone]
 > [Mailing address]
 
 ## 6. Referral thank-you
@@ -101,7 +101,7 @@ covering the registration wait).
 
 ## Cold email (if you email a business before calling)
 
-**Subject:** Missed calls at RingBack Crew
+**Subject:** Missed calls at Callwell
 
 > Hi [Name],
 >
@@ -117,7 +117,7 @@ covering the registration wait).
 > Worth a 15-minute look? Here's my calendar: [booking link]
 >
 > Chris Cardozo
-> RingBack Crew · [Your phone]
+> Callwell · [Your phone]
 > [Mailing address]
 > Not interested? Reply "no thanks" and I won't email again.
 

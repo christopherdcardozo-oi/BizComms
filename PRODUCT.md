@@ -66,9 +66,9 @@ with a usable summary, and reviews answered — with zero dropped calls and zero
 
 ## Brand Commitments
 
-- Name: **RingBack Crew** (chosen October 2026; ringbackcrew.com was unregistered at the time). The name lives in
-  `src/lib/site.ts`. Founder: Chris Cardozo. "Ringback" is a common telephony term, so register the
-  domain and consider a trademark search before investing in the brand.
+- Name: **Callwell** (chosen October 2026; getcallwell.com was unregistered at the time, callwell.com is
+  taken). The name lives in `src/lib/site.ts`. Founder: Chris Cardozo. Run a trademark search before
+  investing in the brand.
 - Voice: plain, direct, owner-to-owner language; no jargon, no hype, no invented numbers.
 
 ## Evidence on Hand

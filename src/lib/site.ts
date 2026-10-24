@@ -1,9 +1,9 @@
 // Public business details used by the marketing site and legal pages.
 // TODO before launch: replace the remaining placeholders (email, mailing address) with real details.
 export const siteConfig = {
-  name: 'RingBack Crew',
+  name: 'Callwell',
   founder: 'Chris Cardozo',
-  legalName: 'Chris Cardozo, doing business as RingBack Crew', // "RingBack Crew LLC" once registered
+  legalName: 'Chris Cardozo, doing business as Callwell', // "Callwell LLC" once registered
   contactEmail: 'support@bizcomms.example', // a real inbox on your domain
   mailingAddress: '[Business mailing address]',
   governingState: 'Iowa',

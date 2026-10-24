@@ -18,7 +18,7 @@ ALLOWED = re.compile(r'^[A-Z][A-Z0-9_]{2,63}$')
 def ask(key: str) -> str | None:
     script = (
         f'display dialog "Paste your {key}, then click Save. It is saved to .env.local and never shown." '
-        'default answer "" with hidden answer with title "RingBack Crew setup" buttons {"Cancel", "Save"} default button "Save"'
+        'default answer "" with hidden answer with title "Callwell setup" buttons {"Cancel", "Save"} default button "Save"'
     )
     result = subprocess.run(['osascript', '-e', script, '-e', 'text returned of result'], capture_output=True, text=True)
     if result.returncode != 0:
