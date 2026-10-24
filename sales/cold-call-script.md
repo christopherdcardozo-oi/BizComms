@@ -23,7 +23,7 @@ Every line is true; nothing here works if you have to fake it.
 
 ### 1. Opener: honest and disarming (10 seconds)
 
-> "Hi, is this [Owner name]? … Hey [Name], this is [Your name]. I'm a local founder here in
+> "Hi, is this [Owner name]? … Hey [Name], this is Chris Cardozo. I'm a local founder here in
 > [Ames]. This is a cold call, so I'll be quick. Can I have 30 seconds, and then you can tell me
 > to get lost?"
 
@@ -103,7 +103,7 @@ Use the same pattern every time: **agree → ask one question → re-ask for the
 | "Not interested." | "Fair enough. Can I ask: is that because you don't miss many calls, or just not right now?" (If it's a real no, thank them and ask for a referral.) |
 | "I already have an answering service." | "Nice, so you know the problem. What does it run you a month? … Mine starts at $29. Worth 15 minutes to compare?" |
 | "How much is it?" | "Plans are $29 to $129 a month, no contract. Which one makes sense depends on how many calls you miss. That's what the 15 minutes figures out. [Day] or [day]?" |
-| "Who is this again? How'd you get my number?" | "It's [Your name], a local founder. Your number's on your Google listing. I'm calling local trades businesses directly instead of buying ads." |
+| "Who is this again? How'd you get my number?" | "It's Chris Cardozo, a local founder. Your number's on your Google listing. I'm calling local trades businesses directly instead of buying ads." |
 | "Is this a robot/AI?" | "Nope, real person, real nervous founder." (Light humor works.) |
 | "I don't want AI talking to my customers." | "Fair. It only picks up when you can't, tells callers it's an assistant, and just takes their details. You can read every word it said. Worth 15 minutes to see it?" |
 | "I'm not going to learn another app." | "You don't have to. It texts you. Reply 1 and you're calling the customer back. That's the whole app." |
@@ -116,7 +116,7 @@ push past a clear no; owners in a small town talk.
 
 ## Gatekeeper (spouse, office manager)
 
-> "Hi, this is [Your name], a local founder. I'm trying to reach [Owner] about the calls that come
+> "Hi, this is Chris Cardozo, a local founder. I'm trying to reach [Owner] about the calls that come
 > in when [he/she/they]'s out on jobs. Who usually handles that?"
 
 Often the gatekeeper IS the person missing calls. Ask them the same question from step 2, and offer
@@ -124,9 +124,9 @@ the demo to both of them.
 
 ## Voicemail (20 seconds max)
 
-> "Hi [Name], it's [Your name], a local founder in [Ames]. I help trades businesses catch the calls
+> "Hi [Name], it's Chris Cardozo, a local founder in [Ames]. I help trades businesses catch the calls
 > that come in while they're on a job. I'll try you again [Thursday morning], or you can reach me at
-> [your number]. Again, [Your name], [your number]."
+> [your number]. Again, Chris Cardozo, [your number]."
 
 Leave at most two voicemails per business, about four days apart.
 

@@ -66,8 +66,9 @@ with a usable summary, and reviews answered — with zero dropped calls and zero
 
 ## Brand Commitments
 
-- Name: **"BizComms" is a working name.** The final name is undecided — keep the name easy to swap
-  (it is centralized in `src/lib/site.ts`) and don't build identity that depends on it.
+- Name: **RingBack Crew** (chosen October 2026; ringbackcrew.com was unregistered at the time). The name lives in
+  `src/lib/site.ts`. Founder: Chris Cardozo. "Ringback" is a common telephony term, so register the
+  domain and consider a trademark search before investing in the brand.
 - Voice: plain, direct, owner-to-owner language; no jargon, no hype, no invented numbers.
 
 ## Evidence on Hand

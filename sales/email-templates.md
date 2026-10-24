@@ -20,8 +20,8 @@ business name, mailing address, and a way to say "no thanks."
 >
 > Nothing to prepare. If the time stops working, just reply and we'll move it.
 >
-> [Your name]
-> [Business name] · [Your phone]
+> Chris Cardozo
+> RingBack Crew · [Your phone]
 > [Mailing address]
 
 *Why:* repeating their own problem back reminds them why they said yes, and "nothing to prepare"
@@ -33,7 +33,7 @@ removes a reason to cancel.
 
 > Hi [Name], quick reminder about our 15 minutes today at [4:30]: [meeting link]
 > Talk soon,
-> [Your name]
+> Chris Cardozo
 
 ## 3. No-show (send 15 minutes after the missed start)
 
@@ -42,14 +42,14 @@ removes a reason to cancel.
 > Hi [Name], looks like today got away from you. Happens to everyone in the trades.
 > Want to grab [Tuesday at 7:30am] or [Wednesday at 5pm] instead? Just reply with the one that works.
 >
-> [Your name] · [Your phone]
+> Chris Cardozo · [Your phone]
 
 *Why:* no guilt, two specific times, and a one-word reply to say yes. Try once more after this, then
 move them to "Call back" in 60 days.
 
 ## 4. After the demo, if they said yes
 
-**Subject:** Getting [Business name] set up
+**Subject:** Getting RingBack Crew set up
 
 > Hi [Name],
 >
@@ -64,7 +64,7 @@ move them to "Call back" in 60 days.
 >
 > Any questions, call or text me directly at [Your phone].
 >
-> [Your name]
+> Chris Cardozo
 
 Only promise "not charged until live" if you set it up that way (for example, with a free trial
 covering the registration wait).
@@ -84,8 +84,8 @@ covering the registration wait).
 >
 > I'll check in [Friday] unless you get to it first. Happy to answer anything in the meantime.
 >
-> [Your name]
-> [Business name] · [Your phone]
+> Chris Cardozo
+> RingBack Crew · [Your phone]
 > [Mailing address]
 
 ## 6. Referral thank-you
@@ -95,13 +95,13 @@ covering the registration wait).
 > Hi [Name], thanks for pointing me to [Referral name] at [their business]. I'll reach out this week
 > and mention you sent me. I appreciate it.
 >
-> [Your name]
+> Chris Cardozo
 
 ---
 
 ## Cold email (if you email a business before calling)
 
-**Subject:** Missed calls at [Business name]
+**Subject:** Missed calls at RingBack Crew
 
 > Hi [Name],
 >
@@ -116,8 +116,8 @@ covering the registration wait).
 >
 > Worth a 15-minute look? Here's my calendar: [booking link]
 >
-> [Your name]
-> [Business name] · [Your phone]
+> Chris Cardozo
+> RingBack Crew · [Your phone]
 > [Mailing address]
 > Not interested? Reply "no thanks" and I won't email again.
 
